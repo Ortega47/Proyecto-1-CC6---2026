@@ -1,0 +1,18 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Dependencias y entornos
+node_modules/
+vendor/
+.env
+.env.*
+
+# Registros y temporales
+*.log
+*.tmp
+
+# Editores
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,256 @@
+/* =====================================================================
+   panel.css — layout del panel interno: barra lateral en escritorio,
+   <details> en móvil, tablero, filtros, pantallas de estado, mantenimientos.
+   ===================================================================== */
+
+.panel-envoltura { min-height: 100vh; }
+@media (min-width: 720px) {
+  .panel-envoltura { display: grid; grid-template-columns: 248px minmax(0, 1fr); }
+}
+
+/* ---------- Barra lateral (escritorio) ---------- */
+.panel-lateral {
+  display: none;
+  background: var(--tinta);
+  color: #fff;
+  padding: var(--esp-4);
+}
+@media (min-width: 720px) {
+  .panel-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-6);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .panel-lateral .menu { display: flex; flex-direction: column; flex: 1; }
+}
+.marca--claro, .marca--claro:hover { color: #fff; }
+.marca--claro img { border-radius: 8px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3); }
+.panel-lateral .marca { padding: var(--esp-2) var(--esp-3); }
+.panel-lateral :focus-visible, .panel-superior :focus-visible { outline-color: var(--cinta); }
+
+/* ---------- Barra superior con <details> (móvil) ---------- */
+.panel-superior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-4);
+  min-height: 56px;
+  padding: var(--esp-2) var(--esp-4);
+  background: var(--tinta);
+  color: #fff;
+}
+@media (min-width: 720px) {
+  .panel-superior { display: none; }
+}
+.menu-movil { position: relative; }
+.menu-movil summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-2);
+  min-height: 44px;
+  padding: 0 var(--esp-3);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radio);
+  font-weight: 500;
+  user-select: none;
+}
+.menu-movil summary::-webkit-details-marker { display: none; }
+.menu-movil summary::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
+}
+.menu-movil[open] summary { background: rgba(255, 255, 255, 0.12); }
+.menu-movil .menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--esp-2));
+  width: min(320px, calc(100vw - 2 * var(--esp-4)));
+  padding: var(--esp-3);
+  background: var(--tinta);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radio);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+/* ---------- Menú (compartido) ---------- */
+.menu__lista { list-style: none; }
+.menu__lista a {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  min-height: 44px;
+  padding: var(--esp-2) var(--esp-3);
+  border-left: 3px solid transparent;
+  border-radius: var(--radio);
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+  font-weight: 500;
+}
+.menu__lista a:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.menu__lista a[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: var(--cinta);
+  color: #fff;
+  font-weight: 600;
+}
+.menu__grupo {
+  margin: var(--esp-4) var(--esp-3) var(--esp-1);
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+.menu__numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+a[aria-current="page"] .menu__numero { background: var(--cinta); border-color: var(--cinta); color: var(--tinta); }
+.menu__texto { flex: 1; }
+.menu__conteo {
+  min-width: 28px;
+  padding: 0 var(--esp-2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.menu__usuario {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  margin-top: var(--esp-4);
+  padding: var(--esp-4) var(--esp-3) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.88);
+}
+.panel-lateral .menu__usuario { margin-top: auto; }
+.menu__usuario a { color: #fff; }
+
+/* ---------- Contenido ---------- */
+.panel-contenido {
+  width: 100%;
+  max-width: var(--ancho-maximo);
+  padding: var(--esp-4);
+}
+@media (min-width: 720px) {
+  .panel-contenido { padding: var(--esp-8) var(--esp-6); }
+}
+@media (min-width: 1040px) {
+  .panel-contenido { padding: var(--esp-8) var(--esp-12); }
+}
+.panel-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  margin-bottom: var(--esp-6);
+}
+.panel-cabecera p { color: var(--texto-2); max-width: 65ch; margin-top: var(--esp-1); }
+.panel-cabecera__cifra { color: var(--texto-2); font-variant-numeric: tabular-nums; }
+
+/* ---------- Tablero ---------- */
+.tablero-ruta { padding: var(--esp-4); margin-bottom: var(--esp-8); }
+@media (min-width: 720px) {
+  .tablero-ruta { padding: var(--esp-6) var(--esp-6) var(--esp-4); }
+}
+.tablero-ruta .ruta__enlace { padding: var(--esp-1); }
+.tablero-ruta .ruta__parada { padding-bottom: var(--esp-4); }
+.tablero-ruta .ruta__parada:last-child { padding-bottom: 0; }
+@media (min-width: 720px) {
+  .tablero-ruta .ruta__parada { padding-bottom: 0; }
+}
+
+/* ---------- Filtros de envíos ---------- */
+.filtros {
+  display: grid;
+  gap: var(--esp-3);
+  padding: var(--esp-4);
+  margin-bottom: var(--esp-4);
+}
+.filtros .campo { margin-bottom: 0; }
+@media (min-width: 720px) {
+  .filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+  .filtros .acciones { grid-column: 1 / -1; }
+}
+@media (min-width: 1040px) {
+  .filtros { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
+  .filtros .acciones { grid-column: auto; }
+}
+.filtros__resumen { margin-bottom: var(--esp-3); color: var(--texto-2); font-variant-numeric: tabular-nums; }
+
+/* ---------- Pantallas de estado ---------- */
+.acciones-masivas {
+  display: grid;
+  gap: var(--esp-3);
+  padding: var(--esp-4);
+  margin-bottom: var(--esp-4);
+}
+.acciones-masivas .campo { margin-bottom: 0; }
+.acciones-masivas__nota { color: var(--texto-2); font-size: 0.9375rem; }
+@media (min-width: 720px) {
+  .acciones-masivas { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+  .acciones-masivas__nota { grid-column: 1 / -1; }
+}
+.tabla .destinatario { max-width: 16rem; }
+
+/* ---------- Detalle de envío ---------- */
+.detalle { display: grid; gap: var(--esp-8); }
+.detalle__bloque { padding: var(--esp-4); }
+@media (min-width: 720px) {
+  .detalle__bloque { padding: var(--esp-6); }
+}
+.detalle__columnas { display: grid; gap: var(--esp-8); align-items: start; }
+@media (min-width: 1040px) {
+  .detalle__columnas { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+.detalle h2 { margin-bottom: var(--esp-3); }
+.formulario-avance p { color: var(--texto-2); margin-bottom: var(--esp-4); }
+
+/* ---------- Mantenimientos (destinos, tiendas) ---------- */
+.mantenimiento { display: grid; gap: var(--esp-8); align-items: start; }
+.formulario-mantenimiento { padding: var(--esp-4); max-width: 640px; scroll-margin-top: var(--esp-4); }
+@media (min-width: 720px) {
+  .formulario-mantenimiento { padding: var(--esp-6); }
+}
+.formulario-mantenimiento h2 { margin-bottom: var(--esp-4); }
+.formulario-mantenimiento .acciones { margin-top: var(--esp-2); }
+.confirmacion { padding: var(--esp-4); border-color: var(--error); margin-bottom: var(--esp-6); }
+.confirmacion h2 { margin-bottom: var(--esp-2); }
+.confirmacion p { margin-bottom: var(--esp-4); max-width: 60ch; }
+.tabla .acciones-fila { display: flex; flex-wrap: wrap; gap: var(--esp-2); justify-content: flex-end; }
+@media (max-width: 719.98px) {
+  .tabla--apilable td .acciones-fila { justify-content: flex-start; }
+}
+.cobertura-no { color: var(--texto-2); }
+
+/* ---------- Acceso (login) ---------- */
+.acceso {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--esp-4);
+}
+.acceso__tarjeta { width: 100%; max-width: 400px; padding: var(--esp-6); }
+.acceso__marca { display: flex; justify-content: center; margin-bottom: var(--esp-6); }
+.acceso h1 { font-size: 1.5rem; margin-bottom: var(--esp-4); }
+.acceso__pie { margin-top: var(--esp-4); text-align: center; font-size: 0.9375rem; color: var(--texto-2); }
