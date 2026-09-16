@@ -16,3 +16,6 @@ vendor/
 .vscode/
 .idea/
 *.swp
+
+# Proyecto de referencia (CC5), no se sube
+referencia-cc5/

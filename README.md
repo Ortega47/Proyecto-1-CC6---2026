@@ -5,9 +5,8 @@ Universidad Galileo · FISICC · Bases de Datos · 2026
 Sistema distribuido de compra en línea con tres sitios: Tienda Virtual, Tarjeta de
 Crédito y Courier. **Este repositorio es el sitio Courier**: administra los destinos
 cubiertos con su costo de envío y manejo, recibe los envíos que piden las tiendas y
-permite darles seguimiento por los cinco estados del enunciado (orden nueva,
-surtiéndose, empacándose, en ruta, entregada). Los otros dos sitios los construyen
-otros grupos.
+les da seguimiento por los cinco estados del enunciado (orden nueva, surtiéndose,
+empacándose, en ruta, entregada). Los otros dos sitios los construyen otros grupos.
 
 Los documentos del proyecto están en `docs/` (enunciado, contrato del WebService,
 modelo de datos, bitácora y diagrama E-R) y el script de la base de datos en
@@ -15,96 +14,109 @@ modelo de datos, bitácora y diagrama E-R) y el script de la base de datos en
 
 ## Qué incluye este commit
 
-Solo el **frontend** de todas las pantallas, con datos de demostración:
+Frontend completo con datos de demostración, en el estilo del proyecto de CC5:
+una carpeta por entidad con `listado.php`, `agregar.php`, `editar.php` y
+`eliminar.php`, PHP directo en cada página y un solo `style.css`.
 
-- HTML, PHP y CSS. **Sin JavaScript**, sin frameworks de CSS y sin recursos externos.
-- Sin base de datos, sin login real y sin WebService. Los formularios responden con
-  una redirección y el mensaje "Vista previa: … cuando conectemos la base de datos".
-- Cada lugar donde después va una consulta está marcado con `// TODO(bd):`.
-- Fuentes Barlow y Barlow Condensed autoalojadas en `assets/fonts/` (licencia OFL).
+- Solo HTML, PHP y CSS. Sin JavaScript, sin frameworks ni recursos externos.
+- Sesión con `$_SESSION` y dos roles: administrador y operador.
+- Todavía **sin conexión a PostgreSQL**: `datos_demo.php` hace de base de datos.
+  Cada consulta que falta está anotada con `// TODO(bd):` y la sentencia con
+  `pg_query_params` y parámetros `$1, $2…`.
+- Después de cada formulario se muestra "Vista previa: esto se guardará cuando
+  conectemos la base de datos." Nada se guarda.
 
 ## Cómo correrlo
 
-Requiere PHP 8.1 o superior. No hay dependencias ni Composer.
+Requiere PHP 8.1 o superior, sin dependencias.
 
-**Con el servidor de PHP**, desde la raíz del repositorio:
+**Servidor de PHP**, desde la raíz del repositorio:
 
 ```
 php -S localhost:8000
 ```
 
-y abrir <http://localhost:8000/>. Si `php` no está en el PATH (por ejemplo, con
-XAMPP en macOS): `/Applications/XAMPP/xamppfiles/bin/php -S localhost:8000`.
+Abrir <http://localhost:8000/>. Si `php` no está en el PATH (XAMPP en macOS):
+`/Applications/XAMPP/xamppfiles/bin/php -S localhost:8000`.
 
-**Con XAMPP** (o cualquier Apache): copiar la carpeta a `htdocs/courier` y en
-`includes/config.php` poner `define('BASE_URL', '/courier');`. Todos los enlaces y
-rutas de assets se arman con `url()`, así que no hay que tocar nada más.
+**XAMPP / Apache:** copiar la carpeta a `htdocs/courier` y abrir
+<http://localhost/courier/>. Los enlaces son relativos, así que funciona en cualquier
+subcarpeta.
 
-## Mapa de pantallas
+**Docker:**
 
-Sitio público (para quien recibe el paquete, mobile-first, trato de usted):
+```
+docker build -t courier .
+docker run -p 8080:80 courier
+```
 
-| Ruta | Pantalla |
-|---|---|
-| `index.php` | Inicio: campo de rastreo, cómo avanza un paquete, destinos y costos |
-| `rastreo.php?guia=…` | Resultado del rastreo: etiqueta de guía, ruta de estados e historial. Responde 404 si la guía no existe |
-| `404.php` | Página no encontrada (también se usa cuando un parámetro no existe) |
+y abrir <http://localhost:8080/>.
 
-Panel interno (personal del courier, carpeta `panel/`):
+## Credenciales de demostración
 
-| Ruta | Pantalla |
-|---|---|
-| `panel/login.php` | Acceso (`?error=1` muestra "Usuario o contraseña incorrectos") |
-| `panel/salir.php` | Cierra sesión y vuelve al login |
-| `panel/index.php` | Tablero: ruta con el conteo de cada etapa y últimos envíos |
-| `panel/envios.php` | Envíos contratados con filtros por estado, tienda, destino y guía u orden |
-| `panel/detalle-envio.php?guia=…` | Etiqueta interna, ruta, historial con usuario y paso a la siguiente etapa. 404 si no existe |
-| `panel/ordenes-nuevas.php` | Estado 1 · botón "Empezar a surtir" |
-| `panel/surtiendose.php` | Estado 2 · botón "Pasar a empaque" |
-| `panel/empacandose.php` | Estado 3 · botón "Despachar a ruta" |
-| `panel/en-ruta.php` | Estado 4 · botón "Confirmar entrega" |
-| `panel/entregadas.php` | Estado 5 · solo consulta |
-| `panel/destinos.php` | Mantenimiento de destinos (`?editar=GT003`, `?eliminar=GT005`) |
-| `panel/tiendas.php` | Mantenimiento de tiendas afiliadas (`?editar=…`, `?eliminar=…`) |
+| Usuario | Contraseña | Rol | Nota |
+|---|---|---|---|
+| `admin` | `admin123` | Administrador | Ana Pérez |
+| `operador` | `operador123` | Operador | Luis Morales; tiene registros en seguimiento |
+| `operador2` | `operador123` | Operador | Carlos Juárez; sin registros, sirve para probar una eliminación que sí procede |
 
-Las cinco pantallas de estado son archivos delgados que incluyen la plantilla
-`includes/pantalla_estado.php`. En cada una hay un solo formulario: el botón
-"… los seleccionados" mueve las guías marcadas y el botón de cada fila mueve una sola
-(en ese caso se ignoran las marcadas).
-
-Guías de demostración para probar el rastreo: `GUA-2609-000004` (en ruta),
+Guías de demostración para el rastreo: `GUA-2609-000004` (en ruta),
 `GUA-2609-000001` (entregada), `GUA-2609-000011` (orden nueva).
 
-## Estructura
+## Mapa de pantallas y permisos
 
-```
-index.php  rastreo.php  404.php
-panel/               pantallas del personal
-includes/
-  config.php         BASE_URL, NOMBRE_COURIER, CODIGO_COURIER
-  funciones.php      h(), url(), fecha_ui(), hora_ui(), moneda(), etiqueta_estado(), …
-  consultas.php      capa de acceso a datos (hoy lee datos_demo.php; después, PDO)
-  datos_demo.php     arreglos con los nombres de columna exactos del modelo
-  pantalla_estado.php
-  partes/            layouts, menú, etiqueta de guía, ruta de estados, insignia, mensajes
-assets/css/          base.css (tokens y componentes), publico.css, panel.css
-assets/fonts/        Barlow y Barlow Condensed (.woff2)
-assets/img/          logo.svg y favicon.svg provisionales
-docs/  db/           documentos del proyecto y script de la base de datos
-```
+| Ruta | Pantalla | Sin sesión | Operador | Admin |
+|---|---|---|---|---|
+| `index.php` | Rastrear paquete y destinos que cubrimos | sí | sí | sí |
+| `rastreo.php?guia=…` | Resultado del rastreo | sí | sí | sí |
+| `login.php`, `logout.php` | Inicio y cierre de sesión | sí | sí | sí |
+| `menu.php` | Menú del personal (botones según rol) | → login | sí | sí |
+| `envios/listado.php` | Envíos con filtros por estado, tienda, destino y guía u orden | → login | sí | sí |
+| `envios/detalle.php?guia=…` | Detalle con dirección e historial | → login | sí | sí |
+| `estados/orden_nueva.php` … `entregadas.php` | Una pantalla por estado (incluyen `tabla_estado.php`) | → login | sí | sí |
+| `estados/cambiar.php?guia=…` | Confirmación Sí/No del paso al siguiente estado | → login | sí | sí |
+| `destinos/listado.php`, `tiendas/listado.php` | Catálogos | → login | sí (sin botones) | sí |
+| `destinos/` y `tiendas/` `agregar`, `editar?id=`, `eliminar?id=` | Mantenimiento | → login | → menú con aviso | sí |
+| `usuarios/*` | Mantenimiento de usuarios | → login | → menú con aviso | sí |
+| `resumen.php` | Envíos por estado, destino y tienda | → login | → menú con aviso | sí |
+
+Reglas que aplica el servidor: solo se avanza al estado inmediato siguiente; no se
+elimina un destino ni una tienda con envíos; un usuario no puede eliminarse a sí mismo
+ni se elimina a quien tenga registros en `seguimiento`; en `usuarios/editar.php`, si la
+contraseña se deja vacía no cambia.
 
 Los nombres `consulta.php`, `envio.php` y `status.php` quedan reservados en la raíz
 para los endpoints del WebService (`/consulta`, `/envio`, `/status`).
 
+## Estructura
+
+```
+index.php  rastreo.php              públicos
+login.php  logout.php  menu.php  resumen.php
+auth.php        exige sesión ($raiz define el redirect: '' o '../')
+solo_admin.php  exige es_admin; si no, vuelve al menú con aviso
+funciones.php   h(), fecha(), hora(), moneda(), nombre_estado() y acceso a datos demo
+datos_demo.php  arreglos con los nombres de columna del modelo (se reemplaza por postsql.php)
+encabezado.php  pie.php  style.css
+envios/  estados/  destinos/  tiendas/  usuarios/
+img/  fuentes/  docs/  db/  Dockerfile
+```
+
 ## Pendientes
 
-- Conexión a PostgreSQL con PDO: reemplazar `includes/consultas.php` y borrar
-  `datos_demo.php`. Cada consulta está anotada con `TODO(bd)`.
-- Login real con `password_verify` y sesión; `panel/salir.php` debe cerrarla.
-- Endpoints del WebService: `/consulta`, `/envio` y `/status`, en XML y JSON, según
-  `docs/03_contrato_webservice.md` (los nombres del contrato son literales, aunque parezcan errores de escritura).
-- Nombre comercial y código de 15 caracteres del courier (`NOMBRE_COURIER` y
-  `CODIGO_COURIER` en `includes/config.php`) y el logo definitivo en `assets/img/`.
-- Formato del número de guía: en la demo es `GUA-aamm-nnnnnn` (15 caracteres);
-  hay que acordarlo con los grupos de Tienda Virtual antes de implementar `/envio`.
-- Manual de usuario para la entrega final.
+- **Conexión a PostgreSQL** con `pg_connect` y `pg_query_params` (archivo `postsql.php`
+  leyendo `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`), reemplazando
+  `datos_demo.php`. Las consultas ya están escritas en cada `TODO(bd)`.
+- **Rol de usuario:** el campo `es_admin` solo existe en los datos demo. Falta aplicar
+  `ALTER TABLE usuario ADD COLUMN es_admin BOOLEAN NOT NULL DEFAULT FALSE;` en
+  `db/courier_bd_simple.sql`, y actualizar `docs/04_modelo_datos.md` y el diagrama E-R.
+- **Campo "activa" de tienda:** el contrato (`/envio`, paso 1) pide validar que la tienda
+  "esté activa", pero el modelo no tiene ese campo. Decidir si se agrega.
+- **Nombres de estado en `status`:** el SQL guarda `SURTIENDOSE` (mayúsculas, sin tilde) y
+  el contrato devuelve "surtiéndose". Acordar cuál viaja en el WebService.
+- **Formato del número de guía:** `GUA-aamm-nnnnnn` (15 caracteres) es provisional
+  hasta acordarlo con los grupos de Tienda Virtual.
+- **Llave de `seguimiento`:** el modelo la describe como entidad débil (llave parcial),
+  pero el SQL usa `BIGSERIAL PRIMARY KEY` sola. Alinear el DDL o el documento.
+- Endpoints `/consulta`, `/envio` y `/status` en XML y JSON; nombre y código de 15
+  caracteres del courier; nombres y carnés del equipo en `pie.php`; manual de usuario.

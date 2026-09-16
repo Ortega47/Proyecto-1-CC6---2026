@@ -1,0 +1,469 @@
+/* Sitio Courier - hoja de estilos única (adaptada del proyecto de CC5) */
+
+@font-face {
+    font-family: 'Barlow';
+    font-weight: 400;
+    font-display: swap;
+    src: url('fuentes/barlow-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Barlow';
+    font-weight: 500;
+    font-display: swap;
+    src: url('fuentes/barlow-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Barlow';
+    font-weight: 600;
+    font-display: swap;
+    src: url('fuentes/barlow-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Barlow Condensed';
+    font-weight: 700;
+    font-display: swap;
+    src: url('fuentes/barlow-condensed-latin-700-normal.woff2') format('woff2');
+}
+
+:root {
+    --fondo: #E4E7EB;
+    --tarjeta: #FFFFFF;
+    --primario: #1B2A4A;
+    --primario-hover: #2A3D66;
+    --franja: #F2B705;
+    --texto: #3D4450;
+    --borde: #D5DAE3;
+    --error: #B42318;
+    --exito: #11733A;
+    --e1: #566070;
+    --e2: #8F5F00;
+    --e3: #86592D;
+    --e4: #1D4ED8;
+    --e5: #11733A;
+    --fuente: 'Barlow', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    --fuente-titulo: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--fuente);
+    font-size: 16px;
+    line-height: 1.5;
+    background-color: var(--fondo);
+    color: var(--texto);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+h1, h2, h3 {
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--primario);
+}
+
+h1 { font-size: 30px; margin-bottom: 8px; }
+h2 { font-size: 22px; margin: 24px 0 8px; }
+h3 { font-size: 18px; margin: 16px 0 4px; }
+
+p { margin: 8px 0; }
+
+a {
+    color: var(--primario);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+a:hover {
+    color: var(--primario-hover);
+}
+
+:focus-visible {
+    outline: 3px solid #1D4ED8;
+    outline-offset: 2px;
+}
+
+/* ---------- Barra superior ---------- */
+
+.barra {
+    background-color: var(--tarjeta);
+    border-bottom: 1px solid var(--borde);
+}
+
+.barra div {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    font-size: 24px;
+}
+
+.marca img {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+}
+
+.barra nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    align-items: center;
+    font-size: 15px;
+}
+
+/* ---------- Tarjeta centrada (login y menú) ---------- */
+
+.tarjeta {
+    width: 100%;
+    max-width: 360px;
+    margin: 40px auto;
+    padding: 24px;
+    background-color: var(--tarjeta);
+    border-radius: 4px;
+    border-top: 6px solid var(--franja);
+    text-align: center;
+}
+
+.tarjeta h1 { margin-bottom: 4px; }
+.tarjeta .rol { color: var(--texto); margin-bottom: 8px; }
+.tarjeta form { text-align: left; }
+
+.grupo {
+    margin: 20px 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--texto);
+    text-align: left;
+}
+
+/* ---------- Contenedor de contenido ---------- */
+
+.contenido {
+    width: 100%;
+    max-width: 1000px;
+    margin: 24px auto;
+    padding: 24px;
+    background-color: var(--tarjeta);
+    border-radius: 4px;
+    border-top: 6px solid var(--franja);
+}
+
+.contenido.angosto {
+    max-width: 560px;
+}
+
+.enlaces {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid var(--borde);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+}
+
+.acceso {
+    font-size: 15px;
+}
+
+/* ---------- Botones ---------- */
+
+button, .boton, input[type=submit] {
+    display: block;
+    width: 100%;
+    padding: 11px 16px;
+    margin-top: 10px;
+    background-color: var(--primario);
+    color: #FFFFFF;
+    border: 1px solid var(--primario);
+    font-family: var(--fuente);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 3px;
+    text-align: center;
+    text-decoration: none;
+    line-height: 1.3;
+}
+
+button:hover, .boton:hover, input[type=submit]:hover {
+    background-color: var(--primario-hover);
+    border-color: var(--primario-hover);
+    color: #FFFFFF;
+}
+
+.boton.secundario, button.secundario {
+    background-color: var(--tarjeta);
+    color: var(--primario);
+}
+
+.boton.secundario:hover, button.secundario:hover {
+    background-color: var(--fondo);
+    color: var(--primario);
+}
+
+.acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.acciones button, .acciones .boton { margin-top: 10px; }
+
+.botones-listado {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 12px 0 8px;
+}
+
+.botones-listado .boton {
+    width: auto;
+    margin-top: 0;
+    padding: 9px 16px;
+}
+
+/* ---------- Tablas ---------- */
+
+.tabla {
+    overflow-x: auto;
+    margin-top: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--tarjeta);
+}
+
+th {
+    background-color: var(--primario);
+    color: #FFFFFF;
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--borde);
+    font-size: 15px;
+    vertical-align: top;
+    font-variant-numeric: tabular-nums;
+}
+
+tr:last-child td { border-bottom: 0; }
+
+tr:hover td {
+    background-color: #F6F7F9;
+}
+
+td.num, th.num { text-align: right; }
+td.nowrap { white-space: nowrap; }
+td.codigo { font-weight: 600; white-space: nowrap; }
+
+.vacio {
+    padding: 24px 12px;
+    text-align: center;
+}
+
+/* ---------- Formularios ---------- */
+
+form { margin-top: 12px; }
+
+label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+input[type=text],
+input[type=search],
+input[type=password],
+input[type=number],
+select,
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 5px;
+    background-color: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 3px;
+    color: var(--texto);
+    font-family: var(--fuente);
+    font-size: 16px;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primario);
+}
+
+input[readonly] {
+    background-color: var(--fondo);
+}
+
+textarea { min-height: 80px; resize: vertical; }
+
+.opcion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-weight: 600;
+}
+
+.opcion input { width: 20px; height: 20px; margin: 0; }
+
+.ayuda {
+    font-size: 14px;
+    color: var(--texto);
+    margin: 4px 0 0;
+}
+
+.filtros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0 12px;
+    align-items: end;
+    margin-bottom: 12px;
+}
+
+.filtros label { margin-top: 8px; }
+.filtros button { margin-top: 8px; }
+
+/* ---------- Mensajes ---------- */
+
+.aviso, .error, .exito {
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 3px;
+    border: 1px solid;
+    text-align: left;
+}
+
+.aviso { background-color: #FFF8E1; border-color: var(--franja); color: var(--primario); }
+.error { background-color: #FDECEA; border-color: var(--error); color: var(--error); }
+.exito { background-color: #E1F5E8; border-color: var(--exito); color: var(--exito); }
+
+/* ---------- Insignias de estado ---------- */
+
+.insignia {
+    display: inline-block;
+    padding: 1px 10px;
+    border: 1px solid currentColor;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.insignia.e1 { color: var(--e1); }
+.insignia.e2 { color: var(--e2); }
+.insignia.e3 { color: var(--e3); }
+.insignia.e4 { color: var(--e4); }
+.insignia.e5 { color: var(--e5); }
+
+/* ---------- Rastreo público ---------- */
+
+.cuadro {
+    border: 1px solid var(--borde);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.cuadro dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 16px;
+}
+
+.cuadro dt { font-weight: 600; }
+.cuadro dd { font-variant-numeric: tabular-nums; }
+
+.guia {
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    font-size: 30px;
+    color: var(--primario);
+    letter-spacing: 0.02em;
+    word-break: break-all;
+}
+
+.ruta {
+    list-style: none;
+    margin-top: 12px;
+    border: 1px solid var(--borde);
+    border-radius: 4px;
+}
+
+.ruta li {
+    display: flex;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--borde);
+}
+
+.ruta li:last-child { border-bottom: 0; }
+
+.ruta .marca-paso {
+    display: inline-block;
+    width: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.ruta .hecho { color: var(--exito); }
+.ruta .actual {
+    background-color: var(--franja);
+    color: var(--primario);
+    font-weight: 600;
+}
+.ruta .futuro { color: #6B7280; }
+
+/* ---------- Pie ---------- */
+
+footer {
+    text-align: center;
+    padding: 20px 16px;
+    font-size: 14px;
+    color: var(--texto);
+}
+
+footer p { margin: 2px 0; }
+
+/* ---------- Móvil ---------- */
+
+@media (max-width: 600px) {
+    .contenido { margin: 12px auto; padding: 16px; border-radius: 0; }
+    .tarjeta { margin: 16px auto; }
+    h1 { font-size: 26px; }
+}

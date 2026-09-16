@@ -1,102 +1,109 @@
 <?php
-declare(strict_types=1);
-require_once __DIR__ . '/includes/consultas.php';
+$raiz = '';
+require __DIR__ . '/funciones.php';
+require __DIR__ . '/datos_demo.php';
 
-$guia_escrita  = trim((string) ($_GET['guia'] ?? ''));
-$rastreo_valor = $guia_escrita;
-$rastreo_error = null;
-$envio         = null;
-$no_encontrada = false;
+$guia  = trim($_GET['guia'] ?? '');
+$error = '';
+$envio = null;
 
-if ($guia_escrita === '') {
-    $rastreo_error = 'Escriba el número de guía para rastrear su paquete.';
-} elseif (mb_strlen($guia_escrita) !== 15) {
-    $rastreo_error = sprintf(
-        'El número de guía tiene 15 caracteres y el que escribió tiene %d. Revíselo e intente de nuevo.',
-        mb_strlen($guia_escrita)
-    );
+if ($guia === '') {
+    $error = 'Escriba el número de guía para rastrear su paquete.';
+} elseif (mb_strlen($guia) !== 15) {
+    $error = 'El número de guía tiene 15 caracteres y el que escribió tiene ' . mb_strlen($guia) . '. Revíselo e intente de nuevo.';
 } else {
-    $envio = envio_por_guia(mb_strtoupper($guia_escrita)); // TODO(bd): consulta por no_guia
+    $guia = mb_strtoupper($guia);
+    // TODO(bd): pg_query_params($conn, 'SELECT * FROM envio WHERE no_guia = $1', [$guia])
+    $envio = buscar('envio', 'no_guia', $guia);
     if ($envio === null) {
-        $no_encontrada = true;
         http_response_code(404);
+        $error = 'No encontramos la guía ' . $guia . '. Revise que los 15 caracteres sean iguales a los de su confirmación de compra o pida el número a la tienda donde compró.';
     }
 }
 
-if ($envio !== null) {
-    $titulo = 'Guía ' . $envio['no_guia'];
-} elseif ($no_encontrada) {
-    $titulo = 'Guía no encontrada';
-} else {
-    $titulo = 'Rastree su paquete';
-}
-require __DIR__ . '/includes/partes/cabecera_publico.php';
+$titulo = $envio !== null ? 'Guía ' . $envio['no_guia'] : 'Rastree su paquete';
+require __DIR__ . '/encabezado.php';
 ?>
-<?php if ($envio !== null): ?>
-  <?php
-  $historial = seguimiento_de($envio['no_guia']);
-  $fechas    = fechas_por_estado($envio['no_guia']);
-  ?>
-  <div class="resultado">
-    <div class="resultado__cabecera">
-      <h1><?= h(frase_estado_publico((int) $envio['id_estado'])) ?></h1>
-      <p>Última actualización: <?= h(fecha_hora_ui($fechas[$envio['id_estado']]['fecha'], $fechas[$envio['id_estado']]['hora'])) ?></p>
+<div class="contenido angosto">
+<?php if ($envio === null): ?>
+    <h1>Rastree su paquete</h1>
+    <p class="error"><?= h($error) ?></p>
+    <form method="get" action="rastreo.php">
+        <label for="guia">Número de guía</label>
+        <input type="text" id="guia" name="guia" required maxlength="15" autocomplete="off" autocapitalize="characters" spellcheck="false" value="<?= h($guia) ?>">
+        <button type="submit">Rastrear paquete</button>
+    </form>
+<?php else: ?>
+    <?php
+    $destino   = buscar('destino', 'id_destino', $envio['id_destino']);
+    $tienda    = buscar('tienda', 'id_tienda', $envio['id_tienda']);
+    $historial = seguimiento_de($envio['no_guia']);
+    $actual    = (int) $envio['id_estado'];
+    ?>
+    <h1>Su paquete</h1>
+    <div class="cuadro">
+        <p class="guia"><?= h($envio['no_guia']) ?></p>
+        <dl>
+            <dt>Estado</dt>
+            <dd><?= insignia_estado($actual) ?></dd>
+            <dt>Para</dt>
+            <dd><?= h(nombre_abreviado($envio['destinatario'])) ?></dd>
+            <dt>Destino</dt>
+            <dd><?= h($destino['ciudad'] ?? $envio['id_destino']) ?></dd>
+            <dt>Tienda</dt>
+            <dd><?= h($tienda['nombre'] ?? $envio['id_tienda']) ?></dd>
+            <dt>Fecha</dt>
+            <dd><?= h(fecha($envio['fecha'])) ?></dd>
+        </dl>
     </div>
 
-    <?php
-    $etiqueta_envio = $envio;
-    $etiqueta_modo  = 'publico';
-    require __DIR__ . '/includes/partes/etiqueta_guia.php';
-    ?>
-
-    <section aria-labelledby="titulo-etapas">
-      <h2 id="titulo-etapas" class="visualmente-oculto">Etapas del envío</h2>
-      <?php
-      $ruta_actual  = (int) $envio['id_estado'];
-      $ruta_fechas  = $fechas;
-      $ruta_animada = true;
-      require __DIR__ . '/includes/partes/ruta_estados.php';
-      ?>
-    </section>
-
-    <section aria-labelledby="titulo-historial">
-      <h2 id="titulo-historial">Historial</h2>
-      <ol class="historial" reversed>
-        <?php foreach (array_reverse($historial) as $registro): ?>
-          <li class="historial__item">
-            <span class="historial__cuando"><?= h(fecha_hora_ui($registro['fecha'], $registro['hora'])) ?></span>
-            <span class="historial__estado"><?= h(etiqueta_estado((int) $registro['id_estado'])) ?></span>
-            <?php if ($registro['observacion'] !== null && $registro['observacion'] !== ''): ?>
-              <span class="historial__nota"><?= h($registro['observacion']) ?></span>
-            <?php endif; ?>
-          </li>
+    <h2>Etapas del envío</h2>
+    <ol class="ruta">
+        <?php foreach ($demo['estado'] as $estado): ?>
+            <?php
+            $id = (int) $estado['id_estado'];
+            if ($id < $actual) {
+                $clase = 'hecho';
+                $marca = '✓';
+            } elseif ($id === $actual) {
+                $clase = 'actual';
+                $marca = $id;
+            } else {
+                $clase = 'futuro';
+                $marca = $id;
+            }
+            ?>
+            <li class="<?= $clase ?>">
+                <span class="marca-paso" aria-hidden="true"><?= $marca ?></span>
+                <span><?= h(nombre_estado($id)) ?><?= $id === $actual ? ' (etapa actual)' : '' ?></span>
+            </li>
         <?php endforeach; ?>
-      </ol>
-    </section>
+    </ol>
 
-    <section class="resultado__otra" aria-labelledby="titulo-otra">
-      <h2 id="titulo-otra">Rastrear otra guía</h2>
-      <?php $rastreo_valor = ''; require __DIR__ . '/includes/partes/formulario_rastreo.php'; ?>
-    </section>
-  </div>
+    <h2>Historial</h2>
+    <div class="tabla">
+        <table>
+            <tr>
+                <th scope="col">Fecha y hora</th>
+                <th scope="col">Etapa</th>
+                <th scope="col">Observación</th>
+            </tr>
+            <?php foreach (array_reverse($historial) as $registro): ?>
+                <tr>
+                    <td class="nowrap"><?= h(fecha($registro['fecha'])) ?> <?= h(hora($registro['hora'])) ?></td>
+                    <td><?= h(nombre_estado($registro['id_estado'])) ?></td>
+                    <td><?= h($registro['observacion'] ?? '') ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
 
-<?php elseif ($no_encontrada): ?>
-  <div class="no-encontrada">
-    <h1>No encontramos la guía <?= h(mb_strtoupper($guia_escrita)) ?></h1>
-    <p>Puede ser que el número tenga un carácter distinto o que la tienda todavía no nos haya enviado la orden.</p>
-    <ul>
-      <li>Revise que los 15 caracteres sean iguales a los de su confirmación de compra.</li>
-      <li>Si acaba de comprar, espere unos minutos y vuelva a intentar.</li>
-      <li>Si sigue sin aparecer, pida el número de guía a la tienda donde compró.</li>
-    </ul>
-    <?php require __DIR__ . '/includes/partes/formulario_rastreo.php'; ?>
-  </div>
-
-<?php else: ?>
-  <section class="portada">
-    <h1>Rastree su paquete</h1>
-    <p class="portada__intro">Escriba el número de guía que le dio la tienda y vea en qué etapa va su envío.</p>
-    <?php require __DIR__ . '/includes/partes/formulario_rastreo.php'; ?>
-  </section>
+    <h2>Rastrear otra guía</h2>
+    <form method="get" action="rastreo.php">
+        <label for="guia">Número de guía</label>
+        <input type="text" id="guia" name="guia" required maxlength="15" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button type="submit">Rastrear paquete</button>
+    </form>
 <?php endif; ?>
-<?php require __DIR__ . '/includes/partes/pie_publico.php'; ?>
+</div>
+<?php require __DIR__ . '/pie.php'; ?>

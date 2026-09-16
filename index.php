@@ -1,50 +1,41 @@
 <?php
-declare(strict_types=1);
-require_once __DIR__ . '/includes/consultas.php';
+$raiz = '';
+require __DIR__ . '/funciones.php';
+require __DIR__ . '/datos_demo.php';
 
 $titulo = 'Rastree su paquete';
-require __DIR__ . '/includes/partes/cabecera_publico.php';
+require __DIR__ . '/encabezado.php';
 ?>
-<section class="portada" aria-labelledby="titulo-rastreo">
-  <h1 id="titulo-rastreo">Rastree su paquete</h1>
-  <p class="portada__intro">Escriba el número de guía que le dio la tienda y vea en qué etapa va su envío.</p>
-  <?php require __DIR__ . '/includes/partes/formulario_rastreo.php'; ?>
-</section>
+<div class="contenido angosto">
+    <h1>Rastree su paquete</h1>
+    <p>Escriba el número de guía que le dio la tienda para ver en qué etapa va su envío.</p>
 
-<section class="seccion etapas" aria-labelledby="titulo-etapas">
-  <div class="encabezado">
-    <h2 id="titulo-etapas">Cómo avanza un paquete</h2>
-    <p>Todo envío pasa por estas cinco etapas, en este orden.</p>
-  </div>
-  <?php
-  $ruta_descripciones = [
-      1 => 'La tienda nos avisó de su compra.',
-      2 => 'Reunimos los artículos de su orden.',
-      3 => 'Cerramos la caja y pegamos la guía.',
-      4 => 'El paquete salió hacia su dirección.',
-      5 => 'El paquete llegó a su destino.',
-  ];
-  require __DIR__ . '/includes/partes/ruta_estados.php';
-  ?>
-</section>
+    <form method="get" action="rastreo.php">
+        <label for="guia">Número de guía</label>
+        <input type="text" id="guia" name="guia" required maxlength="15" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <p class="ayuda">Son 15 caracteres. Lo encuentra en la confirmación de su compra.</p>
+        <button type="submit">Rastrear paquete</button>
+    </form>
 
-<section class="seccion" aria-labelledby="titulo-destinos">
-  <div class="encabezado">
-    <h2 id="titulo-destinos">Destinos que cubrimos</h2>
+    <h2>Destinos que cubrimos</h2>
     <p>El costo incluye el envío y el manejo del paquete.</p>
-  </div>
-  <ul class="destinos">
-    <?php foreach (destinos() as $destino): ?>
-      <li>
-        <span class="destinos__ciudad"><?= h($destino['ciudad']) ?></span>
-        <?php if ($destino['cobertura']): ?>
-          <span class="destinos__costo"><?= h(moneda($destino['costo_envio'] + $destino['costo_manejo'])) ?></span>
-        <?php else: ?>
-          <span class="destinos__sin">Sin cobertura por ahora</span>
-        <?php endif; ?>
-      </li>
-    <?php endforeach; ?>
-  </ul>
-  <p class="destinos__nota">El envío se contrata desde la tienda donde compra; el costo se calcula con el destino que usted indique.</p>
-</section>
-<?php require __DIR__ . '/includes/partes/pie_publico.php'; ?>
+    <div class="tabla">
+        <table>
+            <tr>
+                <th scope="col">Ciudad</th>
+                <th scope="col" class="num">Costo</th>
+            </tr>
+            <?php foreach ($demo['destino'] as $destino): ?>
+                <tr>
+                    <td><?= h($destino['ciudad']) ?></td>
+                    <?php if ($destino['cobertura']): ?>
+                        <td class="num"><?= h(moneda($destino['costo_envio'] + $destino['costo_manejo'])) ?></td>
+                    <?php else: ?>
+                        <td class="num">Sin cobertura por ahora</td>
+                    <?php endif; ?>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
+</div>
+<?php require __DIR__ . '/pie.php'; ?>
