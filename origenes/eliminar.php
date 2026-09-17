@@ -5,7 +5,7 @@ require_once __DIR__.'/../postsql.php';
 if (!$_SESSION['admin']) { header('Location: ../index.php'); exit; }
 $id = $_GET['id'] ?? '';
 if (!is_string($id) || (filter_var($id, FILTER_VALIDATE_INT) === false || $id < 1 || $id > 2147483647)) { http_response_code(404); exit('Identificador no válido.'); }
-$result = pg_query_params($conn, 'SELECT id_tienda FROM Tienda WHERE id_tienda=$1', [$id]);
+$result = pg_query_params($conn, 'SELECT id_origen FROM Origen WHERE id_origen=$1', [$id]);
 if (pg_num_rows($result) === 0) { http_response_code(404); exit('El registro no existe.'); }
 $mensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -15,12 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     elseif ((is_string($_POST['decision'] ?? null) ? trim($_POST['decision']) : '') === 'no') { header('Location: listado.php'); exit; }
     elseif ((is_string($_POST['decision'] ?? null) ? trim($_POST['decision']) : '') === 'si') {
-        $result = @pg_query_params($conn, 'DELETE FROM Tienda WHERE id_tienda=$1', [$id]);
+        $result = @pg_query_params($conn, 'DELETE FROM Origen WHERE id_origen=$1', [$id]);
         if ($result) { $_SESSION['mensaje']='Registro eliminado.'; header('Location: listado.php'); exit; }
         $mensaje = 'No se puede eliminar porque otros registros lo utilizan.';
     }
 }
-$titulo = 'Eliminar tienda';
+$titulo = 'Eliminar origen';
 $formulario = true;
 
 $raiz = $raiz ?? '';

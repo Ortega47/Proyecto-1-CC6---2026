@@ -1,83 +1,94 @@
 <?php
 $raiz = '../';
-require __DIR__ . '/../solo_admin.php';
-require __DIR__ . '/../funciones.php';
-require __DIR__ . '/../datos_demo.php';
-
-$id = trim($_REQUEST['id'] ?? '');
-// TODO(bd): pg_query_params($conn, 'SELECT * FROM destino WHERE id_destino = $1', [$id])
-$destino = $id !== '' ? buscar('destino', 'id_destino', $id) : null;
-
+require __DIR__.'/../auth.php';
+require_once __DIR__.'/../postsql.php';
+if (!$_SESSION['admin']) { header('Location: ../index.php'); exit; }
 $mensaje = '';
-$clase   = '';
-$valores = $destino;
+$id = $_GET['id'] ?? '';
+if (!is_string($id) || (filter_var($id, FILTER_VALIDATE_INT) === false || $id < 1 || $id > 2147483647)) { http_response_code(404); exit('Identificador no válido.'); }
+$result = pg_query_params($conn, 'SELECT id_destino, ciudad, cobertura FROM Destino WHERE id_destino=$1', [$id]);
+$fila = pg_fetch_assoc($result);
+if (!$fila) { http_response_code(404); exit('El registro no existe.'); }
+$id_destino = trim((string)$fila['id_destino']);
+$ciudad = trim((string)$fila['ciudad']);
+$cobertura = trim((string)$fila['cobertura']);
 
-if ($destino !== null && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $valores = [
-        'id_destino'   => $destino['id_destino'],
-        'ciudad'       => trim($_POST['ciudad'] ?? ''),
-        'cobertura'    => isset($_POST['cobertura']),
-        'costo_envio'  => trim($_POST['costo_envio'] ?? ''),
-        'costo_manejo' => trim($_POST['costo_manejo'] ?? ''),
-    ];
-
-    if ($valores['ciudad'] === '') {
-        $mensaje = 'Escriba el nombre de la ciudad.';
-        $clase   = 'error';
-    } elseif (!is_numeric($valores['costo_envio']) || $valores['costo_envio'] < 0 || !is_numeric($valores['costo_manejo']) || $valores['costo_manejo'] < 0) {
-        $mensaje = 'Los costos deben ser números mayores o iguales a 0.';
-        $clase   = 'error';
-    } else {
-        // TODO(bd): pg_query_params($conn,
-        //   'UPDATE destino SET ciudad = $1, cobertura = $2, costo_envio = $3, costo_manejo = $4 WHERE id_destino = $5',
-        //   [$valores['ciudad'], $valores['cobertura'] ? 't' : 'f', $valores['costo_envio'], $valores['costo_manejo'], $id]);
-        $mensaje = 'Vista previa: esto se guardará cuando conectemos la base de datos.';
-        $clase   = 'aviso';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $formulario_correcto = is_string($_POST['token'] ?? null) && hash_equals($_SESSION['token'], $_POST['token']);
+    $ciudad = (is_string($_POST['ciudad'] ?? null) ? trim($_POST['ciudad']) : '');
+    $cobertura = (is_string($_POST['cobertura'] ?? null) ? trim($_POST['cobertura']) : '');
+    if (!$formulario_correcto) {
+        $mensaje = 'Recarga el formulario e inténtalo de nuevo.';
+    }
+    elseif (
+        (filter_var($id_destino, FILTER_VALIDATE_INT) === false ||
+        $id_destino < 1 ||
+        $id_destino > 2147483647) ||
+        ($ciudad === '' ||
+        mb_strlen($ciudad) > 100) ||
+        !in_array($cobertura, ['SI','NO'], true)
+    ) {
+        $mensaje = 'Revisa los campos: IDs positivos, textos completos e importes no negativos.';
+    }
+    else {
+        $result = @pg_query_params($conn, 'UPDATE Destino SET ciudad=$1, cobertura=$2 WHERE id_destino=$3', [$ciudad, $cobertura, $id]);
+        if ($result) {
+            $_SESSION['mensaje'] = 'Registro guardado correctamente.';
+            header('Location: listado.php'); exit;
+        }
+        $mensaje = 'No se pudo guardar. Comprueba que el ID no esté repetido y las referencias existan.';
     }
 }
-
 $titulo = 'Editar destino';
-require __DIR__ . '/../encabezado.php';
+$formulario = true;
+
+$raiz = $raiz ?? '';
+if ($mensaje === '' && isset($_SESSION['mensaje'])) {
+    $mensaje = $_SESSION['mensaje'];
+}
+unset($_SESSION['mensaje']);
 ?>
-<div class="contenido angosto">
-    <h1>Editar destino</h1>
-<?php if ($destino === null): ?>
-    <p class="error">No existe ningún destino con el código <?= h($id) ?>.</p>
-    <div class="enlaces">
-        <a href="listado.php">Listado de destinos</a>
-    </div>
-<?php else: ?>
-    <?php if ($mensaje !== ''): ?>
-        <p class="<?= $clase ?>"><?= h($mensaje) ?></p>
-    <?php endif; ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars(trim((string) ($titulo))) ?> - Courier</title>
+    <link rel="stylesheet" href="<?= htmlspecialchars(trim((string) ($raiz))) ?>style.css">
+</head>
+<body>
+<header>
+    <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Courier</a>
+    <nav><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>rastreo.php">Rastrear paquete</a>
+    <?php if (isset($_SESSION['id'])): ?>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Menú</a>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>logout.php">Cerrar sesión</a>
+    <?php else: ?><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>login.php">Iniciar sesión</a><?php endif; ?>
+    </nav>
+</header>
+<main class="<?= !empty($formulario) ? 'formulario' : 'contenido' ?>">
+<h1><?= htmlspecialchars(trim((string) ($titulo))) ?></h1>
+<?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
-    <form method="post" action="editar.php?id=<?= h(rawurlencode($destino['id_destino'])) ?>">
-        <label for="id_destino">Código</label>
-        <input type="text" id="id_destino" name="id_destino" readonly value="<?= h($destino['id_destino']) ?>">
-        <p class="ayuda">El código es la llave del destino y no se cambia.</p>
 
-        <label for="ciudad">Ciudad</label>
-        <input type="text" id="ciudad" name="ciudad" required maxlength="80" value="<?= h($valores['ciudad']) ?>">
+<form method="post">
+    <input type="hidden" name="token" value="<?= htmlspecialchars(trim((string) ($_SESSION['token']))) ?>">
+    <label for="id_destino">ID del destino</label>
+    <input id="id_destino" name="id_destino" type="number" min="1" max="2147483647" step="1" readonly required value="<?= htmlspecialchars(trim((string) ($id_destino))) ?>">
+    <label for="ciudad">Ciudad</label>
+    <input id="ciudad" name="ciudad" type="text" maxlength="100" required value="<?= htmlspecialchars(trim((string) ($ciudad))) ?>">
+    <label for="cobertura">Cobertura</label>
+    <select id="cobertura" name="cobertura" required>
+        <option value="SI" <?= in_array(mb_strtoupper($cobertura),['SI','SÍ','TRUE','1']) ? 'selected' : '' ?>>Sí</option>
+        <option value="NO" <?= in_array(mb_strtoupper($cobertura),['NO','FALSE','0']) ? 'selected' : '' ?>>No</option>
+    </select>
+    <button>Guardar</button>
+</form>
+<div class="enlaces"><a href="listado.php">Volver al listado</a><a href="../index.php">Menú principal</a></div>
+<?php ?>
+</main>
+<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+</body>
+</html>
 
-        <label class="opcion" for="cobertura">
-            <input type="checkbox" id="cobertura" name="cobertura" value="1" <?= $valores['cobertura'] ? 'checked' : '' ?>>
-            Con cobertura
-        </label>
-        <p class="ayuda">Sin cobertura, la tienda recibe costo 0. Para retirar un destino, apague su cobertura.</p>
-
-        <label for="costo_envio">Costo de envío (Q)</label>
-        <input type="number" id="costo_envio" name="costo_envio" required step="0.01" min="0" value="<?= h($valores['costo_envio']) ?>">
-
-        <label for="costo_manejo">Costo de manejo (Q)</label>
-        <input type="number" id="costo_manejo" name="costo_manejo" required step="0.01" min="0" value="<?= h($valores['costo_manejo']) ?>">
-
-        <button type="submit">Guardar cambios</button>
-    </form>
-
-    <div class="enlaces">
-        <a href="listado.php">Listado de destinos</a>
-        <a href="../menu.php">Menú principal</a>
-    </div>
-<?php endif; ?>
-</div>
-<?php require __DIR__ . '/../pie.php'; ?>
+<?php ?>

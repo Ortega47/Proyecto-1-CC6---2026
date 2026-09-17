@@ -1,109 +1,64 @@
 <?php
-$raiz = '';
-require __DIR__ . '/funciones.php';
-require __DIR__ . '/datos_demo.php';
+session_start();
+date_default_timezone_set('America/Guatemala');
 
-$guia  = trim($_GET['guia'] ?? '');
-$error = '';
-$envio = null;
-
-if ($guia === '') {
-    $error = 'Escriba el número de guía para rastrear su paquete.';
-} elseif (mb_strlen($guia) !== 15) {
-    $error = 'El número de guía tiene 15 caracteres y el que escribió tiene ' . mb_strlen($guia) . '. Revíselo e intente de nuevo.';
-} else {
-    $guia = mb_strtoupper($guia);
-    // TODO(bd): pg_query_params($conn, 'SELECT * FROM envio WHERE no_guia = $1', [$guia])
-    $envio = buscar('envio', 'no_guia', $guia);
-    if ($envio === null) {
-        http_response_code(404);
-        $error = 'No encontramos la guía ' . $guia . '. Revise que los 15 caracteres sean iguales a los de su confirmación de compra o pida el número a la tienda donde compró.';
+require __DIR__.'/postsql.php';
+$guia=is_string($_GET['guia'] ?? null)?trim($_GET['guia']):'';
+$envio=false;
+$historial=false;
+$mensaje='';
+if ($guia!=='') {
+    $r=pg_query_params($conn,'SELECT e.No_guia,e.Fecha,e.Fecha_entrega,s.Nombre AS estado,o.Ciudad AS origen,d.Ciudad AS destino FROM Envio e JOIN Estado s ON e.ID_estado=s.ID_estado JOIN Cabeceras c ON e.ID_cabecera=c.ID_cabecera JOIN Origen o ON c.ID_origen=o.ID_origen JOIN Destino d ON c.ID_destino=d.ID_destino WHERE e.No_guia=$1',[$guia]);
+    $envio=pg_fetch_assoc($r);
+    if (!$envio) {
+        $mensaje='No se encontró un envío con esa guía.';
     }
+    else $historial=pg_query_params($conn,'SELECT s.Fecha,s.Hora,e.Nombre AS estado FROM Seguimiento s JOIN Estado e ON s.ID_estado=e.ID_estado WHERE s.No_guia=$1 ORDER BY s.Fecha,s.Hora,s.ID_seguimiento',[$guia]);
 }
+$titulo='Rastrear un paquete';
+$formulario=true;
 
-$titulo = $envio !== null ? 'Guía ' . $envio['no_guia'] : 'Rastree su paquete';
-require __DIR__ . '/encabezado.php';
+$raiz = $raiz ?? '';
+if ($mensaje === '' && isset($_SESSION['mensaje'])) {
+    $mensaje = $_SESSION['mensaje'];
+}
+unset($_SESSION['mensaje']);
 ?>
-<div class="contenido angosto">
-<?php if ($envio === null): ?>
-    <h1>Rastree su paquete</h1>
-    <p class="error"><?= h($error) ?></p>
-    <form method="get" action="rastreo.php">
-        <label for="guia">Número de guía</label>
-        <input type="text" id="guia" name="guia" required maxlength="15" autocomplete="off" autocapitalize="characters" spellcheck="false" value="<?= h($guia) ?>">
-        <button type="submit">Rastrear paquete</button>
-    </form>
-<?php else: ?>
-    <?php
-    $destino   = buscar('destino', 'id_destino', $envio['id_destino']);
-    $tienda    = buscar('tienda', 'id_tienda', $envio['id_tienda']);
-    $historial = seguimiento_de($envio['no_guia']);
-    $actual    = (int) $envio['id_estado'];
-    ?>
-    <h1>Su paquete</h1>
-    <div class="cuadro">
-        <p class="guia"><?= h($envio['no_guia']) ?></p>
-        <dl>
-            <dt>Estado</dt>
-            <dd><?= insignia_estado($actual) ?></dd>
-            <dt>Para</dt>
-            <dd><?= h(nombre_abreviado($envio['destinatario'])) ?></dd>
-            <dt>Destino</dt>
-            <dd><?= h($destino['ciudad'] ?? $envio['id_destino']) ?></dd>
-            <dt>Tienda</dt>
-            <dd><?= h($tienda['nombre'] ?? $envio['id_tienda']) ?></dd>
-            <dt>Fecha</dt>
-            <dd><?= h(fecha($envio['fecha'])) ?></dd>
-        </dl>
-    </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars(trim((string) ($titulo))) ?> - Courier</title>
+    <link rel="stylesheet" href="<?= htmlspecialchars(trim((string) ($raiz))) ?>style.css">
+</head>
+<body>
+<header>
+    <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Courier</a>
+    <nav><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>rastreo.php">Rastrear paquete</a>
+    <?php if (isset($_SESSION['id'])): ?>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Menú</a>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>logout.php">Cerrar sesión</a>
+    <?php else: ?><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>login.php">Iniciar sesión</a><?php endif; ?>
+    </nav>
+</header>
+<main class="<?= !empty($formulario) ? 'formulario' : 'contenido' ?>">
+<h1><?= htmlspecialchars(trim((string) ($titulo))) ?></h1>
+<?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
-    <h2>Etapas del envío</h2>
-    <ol class="ruta">
-        <?php foreach ($demo['estado'] as $estado): ?>
-            <?php
-            $id = (int) $estado['id_estado'];
-            if ($id < $actual) {
-                $clase = 'hecho';
-                $marca = '✓';
-            } elseif ($id === $actual) {
-                $clase = 'actual';
-                $marca = $id;
-            } else {
-                $clase = 'futuro';
-                $marca = $id;
-            }
-            ?>
-            <li class="<?= $clase ?>">
-                <span class="marca-paso" aria-hidden="true"><?= $marca ?></span>
-                <span><?= h(nombre_estado($id)) ?><?= $id === $actual ? ' (etapa actual)' : '' ?></span>
-            </li>
-        <?php endforeach; ?>
-    </ol>
 
-    <h2>Historial</h2>
-    <div class="tabla">
-        <table>
-            <tr>
-                <th scope="col">Fecha y hora</th>
-                <th scope="col">Etapa</th>
-                <th scope="col">Observación</th>
-            </tr>
-            <?php foreach (array_reverse($historial) as $registro): ?>
-                <tr>
-                    <td class="nowrap"><?= h(fecha($registro['fecha'])) ?> <?= h(hora($registro['hora'])) ?></td>
-                    <td><?= h(nombre_estado($registro['id_estado'])) ?></td>
-                    <td><?= h($registro['observacion'] ?? '') ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </table>
-    </div>
+<form method="get"><label for="guia">Número de guía</label><input id="guia" name="guia" type="text" maxlength="20" value="<?= htmlspecialchars(trim((string) ($guia))) ?>" required><button>Consultar</button></form>
+<?php if ($envio): ?>
+<h2><?= htmlspecialchars(trim((string) ($envio['estado']))) ?></h2>
+<p>Guía: <?= htmlspecialchars(trim((string) ($envio['no_guia']))) ?><br><?= htmlspecialchars(trim((string) ($envio['origen']))) ?> → <?= htmlspecialchars(trim((string) ($envio['destino']))) ?><br>Fecha de entrega: <?= htmlspecialchars(trim((string) ($envio['fecha_entrega'] ?? 'Pendiente'))) ?></p>
+<div class="tabla"><table><tr><th>Fecha</th><th>Hora</th><th>Estado</th></tr>
+<?php while ($fila=pg_fetch_assoc($historial)): ?><tr><td><?= htmlspecialchars(trim((string) ($fila['fecha']))) ?></td><td><?= htmlspecialchars(trim((string) (substr($fila['hora'],0,5)))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['estado']))) ?></td></tr><?php endwhile; ?>
+</table></div><?php endif; ?>
+<p><a href="login.php">Acceso del personal</a></p>
+<?php ?>
+</main>
+<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+</body>
+</html>
 
-    <h2>Rastrear otra guía</h2>
-    <form method="get" action="rastreo.php">
-        <label for="guia">Número de guía</label>
-        <input type="text" id="guia" name="guia" required maxlength="15" autocomplete="off" autocapitalize="characters" spellcheck="false">
-        <button type="submit">Rastrear paquete</button>
-    </form>
-<?php endif; ?>
-</div>
-<?php require __DIR__ . '/pie.php'; ?>
+<?php ?>

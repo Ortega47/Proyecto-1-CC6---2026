@@ -1,4 +1,5 @@
 <?php
-// Pantalla de estado 3 - Empacándose. La tabla y la lógica están en tabla_estado.php.
-$id_estado = 3;
-require __DIR__ . '/tabla_estado.php';
+// Pantalla de los envíos en empacándose.
+$estado_fijo=3;
+$titulo_estado='Empacándose';
+require __DIR__.'/../envios/listado.php';

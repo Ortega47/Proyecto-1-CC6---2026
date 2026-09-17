@@ -2,8 +2,8 @@
 $raiz = '../';
 require __DIR__.'/../auth.php';
 require_once __DIR__.'/../postsql.php';
-$result = pg_query($conn, 'SELECT id_destino, ciudad, cobertura FROM Destino ORDER BY id_destino');
-$titulo = 'Destinos';
+$result = pg_query($conn, 'SELECT id_origen, ciudad, cobertura FROM Origen ORDER BY id_origen');
+$titulo = 'Orígenes';
 $mensaje = '';
 
 $raiz = $raiz ?? '';
@@ -35,17 +35,17 @@ unset($_SESSION['mensaje']);
 <?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
 
-<?php if ($_SESSION['admin']): ?><a class="button" href="agregar.php">Agregar destino</a><?php endif; ?>
+<?php if ($_SESSION['admin']): ?><a class="button" href="agregar.php">Agregar origen</a><?php endif; ?>
 <div class="tabla"><table>
-<tr><th scope="col">ID del destino</th><th scope="col">Ciudad</th><th scope="col">Cobertura</th><?php if ($_SESSION['admin']): ?><th>Acciones</th><?php endif; ?></tr>
+<tr><th scope="col">ID del origen</th><th scope="col">Ciudad</th><th scope="col">Cobertura</th><?php if ($_SESSION['admin']): ?><th>Acciones</th><?php endif; ?></tr>
 <?php while ($fila = pg_fetch_assoc($result)): ?>
 <tr>
-<td><?= htmlspecialchars(trim((string) ($fila['id_destino']))) ?></td>
+<td><?= htmlspecialchars(trim((string) ($fila['id_origen']))) ?></td>
 <td><?= htmlspecialchars(trim((string) ($fila['ciudad']))) ?></td>
 <td><?= htmlspecialchars(trim((string) ($fila['cobertura']))) ?></td>
 <?php if ($_SESSION['admin']): ?><td>
-<a href="editar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_destino']))) ?>">Editar</a>
-<a href="eliminar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_destino']))) ?>">Eliminar</a>
+<a href="editar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_origen']))) ?>">Editar</a>
+<a href="eliminar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_origen']))) ?>">Eliminar</a>
 </td><?php endif; ?>
 </tr>
 <?php endwhile; ?>

@@ -5,24 +5,28 @@ require_once __DIR__.'/../postsql.php';
 if (!$_SESSION['admin']) { header('Location: ../index.php'); exit; }
 
 $id=$_GET['id'] ?? '';
-if (!is_string($id) || (filter_var($id, FILTER_VALIDATE_INT) === false || $id < 1 || $id > 2147483647)) { http_response_code(400); exit('No se puede eliminar al administrador.'); }
-$result=pg_query_params($conn,'SELECT Nombre FROM Usuario WHERE ID_usuario=$1',[$id]);
+if (!is_string($id) || (filter_var($id, FILTER_VALIDATE_INT) === false || $id < 1 || $id > 2147483647)) { http_response_code(404); exit('ID no válido.'); }
+$result=pg_query_params($conn,'SELECT * FROM Seguimiento WHERE ID_seguimiento=$1',[$id]);
 $fila=pg_fetch_assoc($result);
-if (!$fila) { http_response_code(404); exit('Usuario no encontrado.'); }
+if (!$fila) { http_response_code(404); exit('Seguimiento no encontrado.'); }
+$observacion=trim($fila['observacion'] ?? '');
 $mensaje='';
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     $formulario_correcto = is_string($_POST['token'] ?? null) && hash_equals($_SESSION['token'], $_POST['token']);
+    $observacion=(is_string($_POST['observacion'] ?? null) ? trim($_POST['observacion']) : '');
     if (!$formulario_correcto) {
         $mensaje='Recarga el formulario.';
     }
-    elseif ((is_string($_POST['decision'] ?? null) ? trim($_POST['decision']) : '')==='no') { header('Location: listado.php'); exit; }
-    elseif ((is_string($_POST['decision'] ?? null) ? trim($_POST['decision']) : '')==='si') {
-        $result=@pg_query_params($conn,'DELETE FROM Usuario WHERE ID_usuario=$1',[$id]);
-        if ($result) { $_SESSION['mensaje']='Usuario eliminado.'; header('Location: listado.php'); exit; }
-        $mensaje='No se puede eliminar porque tiene registros en Seguimiento.';
+    elseif (mb_strlen($observacion)>200) {
+        $mensaje='La observación admite hasta 200 caracteres.';
+    }
+    else {
+        $result=@pg_query_params($conn,'UPDATE Seguimiento SET Observacion=$1 WHERE ID_seguimiento=$2',[$observacion,$id]);
+        if ($result) { $_SESSION['mensaje']='Observación actualizada.'; header('Location: listado.php?guia='.rawurlencode(trim($fila['no_guia']))); exit; }
+        $mensaje='No se pudo actualizar la observación.';
     }
 }
-$titulo='Eliminar usuario';
+$titulo='Editar observación';
 $formulario=true;
 
 $raiz = $raiz ?? '';
@@ -54,10 +58,11 @@ unset($_SESSION['mensaje']);
 <?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
 
-<p>¿Eliminar a <?= htmlspecialchars(trim((string) ($fila['nombre']))) ?> (ID <?= htmlspecialchars(trim((string) ($id))) ?>)?</p>
+<p>Guía: <?= htmlspecialchars(trim((string) ($fila['no_guia']))) ?> · <?= htmlspecialchars(trim((string) ($fila['fecha']))) ?> <?= htmlspecialchars(trim((string) (substr($fila['hora'],0,5)))) ?></p>
+<p class="ayuda">El estado, la fecha y el usuario conservan los datos del avance registrado.</p>
 <form method="post"><input type="hidden" name="token" value="<?= htmlspecialchars(trim((string) ($_SESSION['token']))) ?>">
-<div class="acciones"><button name="decision" value="si">Sí, eliminar</button><button class="secundario" name="decision" value="no">No</button></div></form>
-<a href="listado.php">Volver al listado</a>
+<label for="observacion">Observación</label><textarea id="observacion" name="observacion" rows="4" maxlength="200"><?= htmlspecialchars(trim((string) ($observacion))) ?></textarea><button>Guardar</button></form>
+<div class="enlaces"><a href="listado.php">Seguimiento</a><a href="../index.php">Menú principal</a></div>
 <?php ?>
 </main>
 <footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>

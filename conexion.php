@@ -1,10 +1,12 @@
 <?php
-$raiz = '../';
-require __DIR__.'/../auth.php';
-require_once __DIR__.'/../postsql.php';
-$result = pg_query($conn, 'SELECT id_destino, ciudad, cobertura FROM Destino ORDER BY id_destino');
-$titulo = 'Destinos';
+session_start();
+date_default_timezone_set('America/Guatemala');
+
+$probar_conexion = true;
+require __DIR__.'/postsql.php';
 $mensaje = '';
+$titulo = 'Conexión a PostgreSQL';
+$formulario = true;
 
 $raiz = $raiz ?? '';
 if ($mensaje === '' && isset($_SESSION['mensaje'])) {
@@ -35,23 +37,19 @@ unset($_SESSION['mensaje']);
 <?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
 
-<?php if ($_SESSION['admin']): ?><a class="button" href="agregar.php">Agregar destino</a><?php endif; ?>
-<div class="tabla"><table>
-<tr><th scope="col">ID del destino</th><th scope="col">Ciudad</th><th scope="col">Cobertura</th><?php if ($_SESSION['admin']): ?><th>Acciones</th><?php endif; ?></tr>
-<?php while ($fila = pg_fetch_assoc($result)): ?>
-<tr>
-<td><?= htmlspecialchars(trim((string) ($fila['id_destino']))) ?></td>
-<td><?= htmlspecialchars(trim((string) ($fila['ciudad']))) ?></td>
-<td><?= htmlspecialchars(trim((string) ($fila['cobertura']))) ?></td>
-<?php if ($_SESSION['admin']): ?><td>
-<a href="editar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_destino']))) ?>">Editar</a>
-<a href="eliminar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_destino']))) ?>">Eliminar</a>
-</td><?php endif; ?>
-</tr>
-<?php endwhile; ?>
-</table></div>
-<?php if (pg_num_rows($result) === 0): ?><p>No hay registros.</p><?php endif; ?>
-<div class="enlaces"><a href="../index.php">Menú principal</a></div>
+<p>Escribe el servidor, puerto, base, usuario y contraseña en <b>postsql.php</b>.</p>
+<?php if (!function_exists('pg_connect')): ?>
+<p class="mensaje">Activa extension=pgsql en php.ini y reinicia PHP o Apache.</p>
+<?php elseif (!$conn): ?>
+<p class="mensaje">No se pudo conectar. Comprueba los datos de postsql.php y que PostgreSQL esté iniciado.</p>
+<?php else: ?>
+<p class="exito">Conexión realizada correctamente.</p>
+<?php if (isset($_SESSION['id']) || in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1','::1'],true)): ?>
+<p>Servidor: <?= htmlspecialchars(trim((string) ($host))) ?> · Puerto: <?= htmlspecialchars(trim((string) ($port))) ?><br>Base de datos: <?= htmlspecialchars(trim((string) ($dbname))) ?></p>
+<?php endif; ?>
+<?php endif; ?>
+<form method="get"><button>Probar conexión de nuevo</button></form>
+<p><a href="login.php">Iniciar sesión</a></p>
 <?php ?>
 </main>
 <footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>

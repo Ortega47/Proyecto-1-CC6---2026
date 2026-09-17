@@ -1,4 +1,5 @@
 <?php
-// Pantalla de estado 1 - Orden nueva. La tabla y la lógica están en tabla_estado.php.
-$id_estado = 1;
-require __DIR__ . '/tabla_estado.php';
+// Pantalla de los envíos en orden nueva.
+$estado_fijo=1;
+$titulo_estado='Orden nueva';
+require __DIR__.'/../envios/listado.php';

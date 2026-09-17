@@ -1,72 +1,67 @@
 <?php
 $raiz = '../';
-require __DIR__ . '/../solo_admin.php';
-require __DIR__ . '/../funciones.php';
-require __DIR__ . '/../datos_demo.php';
-
-$id = trim($_REQUEST['id'] ?? '');
-// TODO(bd): pg_query_params($conn, 'SELECT * FROM destino WHERE id_destino = $1', [$id])
-$destino = $id !== '' ? buscar('destino', 'id_destino', $id) : null;
-$envios  = $destino !== null ? contar_envios('id_destino', $id) : 0;
-
+require __DIR__.'/../auth.php';
+require_once __DIR__.'/../postsql.php';
+if (!$_SESSION['admin']) { header('Location: ../index.php'); exit; }
+$id = $_GET['id'] ?? '';
+if (!is_string($id) || (filter_var($id, FILTER_VALIDATE_INT) === false || $id < 1 || $id > 2147483647)) { http_response_code(404); exit('Identificador no válido.'); }
+$result = pg_query_params($conn, 'SELECT id_destino FROM Destino WHERE id_destino=$1', [$id]);
+if (pg_num_rows($result) === 0) { http_response_code(404); exit('El registro no existe.'); }
 $mensaje = '';
-$clase   = '';
-
-if ($destino !== null && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (($_POST['decision'] ?? '') !== 'si') {
-        header('Location: listado.php');
-        exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $formulario_correcto = is_string($_POST['token'] ?? null) && hash_equals($_SESSION['token'], $_POST['token']);
+    if (!$formulario_correcto) {
+        $mensaje = 'Recarga el formulario.';
     }
-    if ($envios > 0) {
-        $mensaje = 'No se puede eliminar: el destino tiene ' . $envios . ' envíos. Para retirarlo, edítelo y apague la cobertura.';
-        $clase   = 'error';
-    } else {
-        // TODO(bd): pg_query_params($conn, 'DELETE FROM destino WHERE id_destino = $1', [$id]);
-        $mensaje = 'Vista previa: esto se guardará cuando conectemos la base de datos.';
-        $clase   = 'aviso';
+    elseif ((is_string($_POST['decision'] ?? null) ? trim($_POST['decision']) : '') === 'no') { header('Location: listado.php'); exit; }
+    elseif ((is_string($_POST['decision'] ?? null) ? trim($_POST['decision']) : '') === 'si') {
+        $result = @pg_query_params($conn, 'DELETE FROM Destino WHERE id_destino=$1', [$id]);
+        if ($result) { $_SESSION['mensaje']='Registro eliminado.'; header('Location: listado.php'); exit; }
+        $mensaje = 'No se puede eliminar porque otros registros lo utilizan.';
     }
 }
-
 $titulo = 'Eliminar destino';
-require __DIR__ . '/../encabezado.php';
+$formulario = true;
+
+$raiz = $raiz ?? '';
+if ($mensaje === '' && isset($_SESSION['mensaje'])) {
+    $mensaje = $_SESSION['mensaje'];
+}
+unset($_SESSION['mensaje']);
 ?>
-<div class="contenido angosto">
-    <h1>Eliminar destino</h1>
-<?php if ($destino === null): ?>
-    <p class="error">No existe ningún destino con el código <?= h($id) ?>.</p>
-<?php else: ?>
-    <?php if ($mensaje !== ''): ?>
-        <p class="<?= $clase ?>"><?= h($mensaje) ?></p>
-    <?php endif; ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars(trim((string) ($titulo))) ?> - Courier</title>
+    <link rel="stylesheet" href="<?= htmlspecialchars(trim((string) ($raiz))) ?>style.css">
+</head>
+<body>
+<header>
+    <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Courier</a>
+    <nav><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>rastreo.php">Rastrear paquete</a>
+    <?php if (isset($_SESSION['id'])): ?>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Menú</a>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>logout.php">Cerrar sesión</a>
+    <?php else: ?><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>login.php">Iniciar sesión</a><?php endif; ?>
+    </nav>
+</header>
+<main class="<?= !empty($formulario) ? 'formulario' : 'contenido' ?>">
+<h1><?= htmlspecialchars(trim((string) ($titulo))) ?></h1>
+<?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
-    <div class="cuadro">
-        <dl>
-            <dt>Código</dt>
-            <dd class="codigo"><?= h($destino['id_destino']) ?></dd>
-            <dt>Ciudad</dt>
-            <dd><?= h($destino['ciudad']) ?></dd>
-            <dt>Cobertura</dt>
-            <dd><?= $destino['cobertura'] ? 'Sí' : 'No' ?></dd>
-            <dt>Envíos</dt>
-            <dd><?= $envios ?></dd>
-        </dl>
-    </div>
 
-    <?php if ($envios > 0): ?>
-        <p class="error">Este destino tiene <?= $envios ?> envíos y no se puede eliminar. Para retirarlo, <a href="editar.php?id=<?= h(rawurlencode($destino['id_destino'])) ?>">edítelo</a> y apague la cobertura.</p>
-    <?php elseif ($clase !== 'aviso'): ?>
-        <form method="post" action="eliminar.php?id=<?= h(rawurlencode($destino['id_destino'])) ?>">
-            <h3>¿Eliminar el destino <?= h($destino['ciudad']) ?>?</h3>
-            <div class="acciones">
-                <button type="submit" name="decision" value="si">Sí, eliminar</button>
-                <button type="submit" name="decision" value="no" class="secundario">No</button>
-            </div>
-        </form>
-    <?php endif; ?>
-<?php endif; ?>
-    <div class="enlaces">
-        <a href="listado.php">Listado de destinos</a>
-        <a href="../menu.php">Menú principal</a>
-    </div>
-</div>
-<?php require __DIR__ . '/../pie.php'; ?>
+<p>¿Eliminar el registro con ID <b><?= htmlspecialchars(trim((string) ($id))) ?></b>?</p>
+<form method="post">
+    <input type="hidden" name="token" value="<?= htmlspecialchars(trim((string) ($_SESSION['token']))) ?>">
+    <div class="acciones"><button name="decision" value="si">Sí, eliminar</button><button name="decision" value="no" class="secundario">No</button></div>
+</form>
+<a href="listado.php">Volver al listado</a>
+<?php ?>
+</main>
+<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+</body>
+</html>
+
+<?php ?>

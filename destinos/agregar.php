@@ -1,76 +1,90 @@
 <?php
 $raiz = '../';
-require __DIR__ . '/../solo_admin.php';
-require __DIR__ . '/../funciones.php';
-require __DIR__ . '/../datos_demo.php';
-
+require __DIR__.'/../auth.php';
+require_once __DIR__.'/../postsql.php';
+if (!$_SESSION['admin']) { header('Location: ../index.php'); exit; }
 $mensaje = '';
-$clase   = '';
-$valores = ['id_destino' => '', 'ciudad' => '', 'cobertura' => true, 'costo_envio' => '', 'costo_manejo' => ''];
+$id_destino = '';
+$ciudad = '';
+$cobertura = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $valores = [
-        'id_destino'   => mb_strtoupper(trim($_POST['id_destino'] ?? '')),
-        'ciudad'       => trim($_POST['ciudad'] ?? ''),
-        'cobertura'    => isset($_POST['cobertura']),
-        'costo_envio'  => trim($_POST['costo_envio'] ?? ''),
-        'costo_manejo' => trim($_POST['costo_manejo'] ?? ''),
-    ];
-
-    if (mb_strlen($valores['id_destino']) !== 5) {
-        $mensaje = 'El código debe tener exactamente 5 caracteres.';
-    } elseif (buscar('destino', 'id_destino', $valores['id_destino']) !== null) {
-        $mensaje = 'Ya existe un destino con el código ' . $valores['id_destino'] . '.';
-    } elseif ($valores['ciudad'] === '') {
-        $mensaje = 'Escriba el nombre de la ciudad.';
-    } elseif (!is_numeric($valores['costo_envio']) || $valores['costo_envio'] < 0 || !is_numeric($valores['costo_manejo']) || $valores['costo_manejo'] < 0) {
-        $mensaje = 'Los costos deben ser números mayores o iguales a 0.';
-    } else {
-        // TODO(bd): pg_query_params($conn,
-        //   'INSERT INTO destino (id_destino, ciudad, cobertura, costo_envio, costo_manejo) VALUES ($1, $2, $3, $4, $5)',
-        //   [$valores['id_destino'], $valores['ciudad'], $valores['cobertura'] ? 't' : 'f', $valores['costo_envio'], $valores['costo_manejo']]);
-        $mensaje = 'Vista previa: esto se guardará cuando conectemos la base de datos.';
-        $clase   = 'aviso';
+    $formulario_correcto = is_string($_POST['token'] ?? null) && hash_equals($_SESSION['token'], $_POST['token']);
+    $id_destino = (is_string($_POST['id_destino'] ?? null) ? trim($_POST['id_destino']) : '');
+    $ciudad = (is_string($_POST['ciudad'] ?? null) ? trim($_POST['ciudad']) : '');
+    $cobertura = (is_string($_POST['cobertura'] ?? null) ? trim($_POST['cobertura']) : '');
+    if (!$formulario_correcto) {
+        $mensaje = 'Recarga el formulario e inténtalo de nuevo.';
     }
-    if ($clase === '') {
-        $clase = 'error';
+    elseif (
+        (filter_var($id_destino, FILTER_VALIDATE_INT) === false ||
+        $id_destino < 1 ||
+        $id_destino > 2147483647) ||
+        ($ciudad === '' ||
+        mb_strlen($ciudad) > 100) ||
+        !in_array($cobertura, ['SI','NO'], true)
+    ) {
+        $mensaje = 'Revisa los campos: IDs positivos, textos completos e importes no negativos.';
+    }
+    else {
+        $result = @pg_query_params($conn, 'INSERT INTO Destino (id_destino, ciudad, cobertura) VALUES ($1, $2, $3)', [$id_destino, $ciudad, $cobertura]);
+        if ($result) {
+            $_SESSION['mensaje'] = 'Registro guardado correctamente.';
+            header('Location: listado.php'); exit;
+        }
+        $mensaje = 'No se pudo guardar. Comprueba que el ID no esté repetido y las referencias existan.';
     }
 }
-
 $titulo = 'Agregar destino';
-require __DIR__ . '/../encabezado.php';
+$formulario = true;
+
+$raiz = $raiz ?? '';
+if ($mensaje === '' && isset($_SESSION['mensaje'])) {
+    $mensaje = $_SESSION['mensaje'];
+}
+unset($_SESSION['mensaje']);
 ?>
-<div class="contenido angosto">
-    <h1>Agregar destino</h1>
-    <?php if ($mensaje !== ''): ?>
-        <p class="<?= $clase ?>"><?= h($mensaje) ?></p>
-    <?php endif; ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars(trim((string) ($titulo))) ?> - Courier</title>
+    <link rel="stylesheet" href="<?= htmlspecialchars(trim((string) ($raiz))) ?>style.css">
+</head>
+<body>
+<header>
+    <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Courier</a>
+    <nav><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>rastreo.php">Rastrear paquete</a>
+    <?php if (isset($_SESSION['id'])): ?>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Menú</a>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>logout.php">Cerrar sesión</a>
+    <?php else: ?><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>login.php">Iniciar sesión</a><?php endif; ?>
+    </nav>
+</header>
+<main class="<?= !empty($formulario) ? 'formulario' : 'contenido' ?>">
+<h1><?= htmlspecialchars(trim((string) ($titulo))) ?></h1>
+<?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
-    <form method="post" action="agregar.php">
-        <label for="id_destino">Código (5 caracteres)</label>
-        <input type="text" id="id_destino" name="id_destino" required minlength="5" maxlength="5" autocapitalize="characters" spellcheck="false" value="<?= h($valores['id_destino']) ?>">
 
-        <label for="ciudad">Ciudad</label>
-        <input type="text" id="ciudad" name="ciudad" required maxlength="80" value="<?= h($valores['ciudad']) ?>">
+<form method="post">
+    <input type="hidden" name="token" value="<?= htmlspecialchars(trim((string) ($_SESSION['token']))) ?>">
+    <label for="id_destino">ID del destino</label>
+    <input id="id_destino" name="id_destino" type="number" min="1" max="2147483647" step="1" required value="<?= htmlspecialchars(trim((string) ($id_destino))) ?>">
+    <label for="ciudad">Ciudad</label>
+    <input id="ciudad" name="ciudad" type="text" maxlength="100" required value="<?= htmlspecialchars(trim((string) ($ciudad))) ?>">
+    <label for="cobertura">Cobertura</label>
+    <select id="cobertura" name="cobertura" required>
+        <option value="SI" <?= in_array(mb_strtoupper($cobertura),['SI','SÍ','TRUE','1']) ? 'selected' : '' ?>>Sí</option>
+        <option value="NO" <?= in_array(mb_strtoupper($cobertura),['NO','FALSE','0']) ? 'selected' : '' ?>>No</option>
+    </select>
+    <button>Guardar</button>
+</form>
+<div class="enlaces"><a href="listado.php">Volver al listado</a><a href="../index.php">Menú principal</a></div>
+<?php ?>
+</main>
+<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+</body>
+</html>
 
-        <label class="opcion" for="cobertura">
-            <input type="checkbox" id="cobertura" name="cobertura" value="1" <?= $valores['cobertura'] ? 'checked' : '' ?>>
-            Con cobertura
-        </label>
-        <p class="ayuda">Sin cobertura, la tienda recibe costo 0.</p>
-
-        <label for="costo_envio">Costo de envío (Q)</label>
-        <input type="number" id="costo_envio" name="costo_envio" required step="0.01" min="0" value="<?= h($valores['costo_envio']) ?>">
-
-        <label for="costo_manejo">Costo de manejo (Q)</label>
-        <input type="number" id="costo_manejo" name="costo_manejo" required step="0.01" min="0" value="<?= h($valores['costo_manejo']) ?>">
-
-        <button type="submit">Guardar destino</button>
-    </form>
-
-    <div class="enlaces">
-        <a href="listado.php">Listado de destinos</a>
-        <a href="../menu.php">Menú principal</a>
-    </div>
-</div>
-<?php require __DIR__ . '/../pie.php'; ?>
+<?php ?>

@@ -1,21 +1,8 @@
-# Sistema
 .DS_Store
 Thumbs.db
-
-# Dependencias y entornos
-node_modules/
-vendor/
 .env
 .env.*
-
-# Registros y temporales
 *.log
-*.tmp
-
-# Editores
 .vscode/
 .idea/
-*.swp
-
-# Proyecto de referencia (CC5), no se sube
-referencia-cc5/
+__pycache__/

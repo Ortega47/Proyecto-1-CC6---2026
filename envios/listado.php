@@ -1,121 +1,74 @@
 <?php
 $raiz = '../';
-require __DIR__ . '/../auth.php';
-require __DIR__ . '/../funciones.php';
-require __DIR__ . '/../datos_demo.php';
+require __DIR__.'/../auth.php';
+require_once __DIR__.'/../postsql.php';
 
-$f_estado  = $_GET['estado'] ?? '';
-$f_tienda  = $_GET['tienda'] ?? '';
-$f_destino = $_GET['destino'] ?? '';
-$f_q       = trim($_GET['q'] ?? '');
-$hay_filtros = ($f_estado !== '' || $f_tienda !== '' || $f_destino !== '' || $f_q !== '');
+$estado = isset($estado_fijo) ? (string)$estado_fijo : ($_GET['estado'] ?? '');
+if (!is_string($estado) || ($estado !== '' && (filter_var($estado, FILTER_VALIDATE_INT) === false || $estado < 1 || $estado > 2147483647))) $estado='';
+$guia = is_string($_GET['guia'] ?? null) ? trim($_GET['guia']) : '';
+$query = 'SELECT e.*, s.nombre AS estado, t.nombre AS tienda, d.ciudad AS destino
+          FROM Envio e JOIN Estado s ON e.ID_estado=s.ID_estado
+          JOIN Tienda t ON e.ID_tienda=t.ID_tienda
+          JOIN Cabeceras c ON e.ID_cabecera=c.ID_cabecera
+          JOIN Destino d ON c.ID_destino=d.ID_destino
+          WHERE ($1::int IS NULL OR e.ID_estado=$1) AND ($2::text=\'\' OR TRIM(e.No_guia) ILIKE $3)
+          ORDER BY e.Fecha DESC,e.Hora DESC,e.No_guia';
+$result = pg_query_params($conn,$query,[$estado===''?null:$estado,$guia,'%'.$guia.'%']);
+$estados=pg_query($conn,'SELECT * FROM Estado ORDER BY Orden');
+$titulo=$titulo_estado ?? 'Envíos';
+$mensaje='';
 
-// TODO(bd): armar WHERE con pg_query_params, por ejemplo:
-//   $where = []; $params = []; $p = 1;
-//   if ($f_estado !== '')  { $where[] = "e.id_estado = \$" . $p++;  $params[] = (int) $f_estado; }
-//   if ($f_tienda !== '')  { $where[] = "e.id_tienda = \$" . $p++;  $params[] = $f_tienda; }
-//   if ($f_destino !== '') { $where[] = "e.id_destino = \$" . $p++; $params[] = $f_destino; }
-//   if ($f_q !== '')       { $where[] = "(e.no_guia ILIKE \$$p OR e.no_orden ILIKE \$$p)"; $params[] = "%$f_q%"; $p++; }
-//   $sql = "SELECT e.*, t.nombre AS tienda, d.ciudad FROM envio e JOIN tienda t USING (id_tienda) JOIN destino d USING (id_destino)"
-//        . ($where ? " WHERE " . implode(" AND ", $where) : "") . " ORDER BY e.fecha DESC, e.hora DESC";
-//   $r = pg_query_params($conn, $sql, $params);
-$envios = [];
-foreach ($demo['envio'] as $envio) {
-    if ($f_estado !== '' && (string) $envio['id_estado'] !== $f_estado) continue;
-    if ($f_tienda !== '' && $envio['id_tienda'] !== $f_tienda) continue;
-    if ($f_destino !== '' && $envio['id_destino'] !== $f_destino) continue;
-    if ($f_q !== '' && stripos($envio['no_guia'], $f_q) === false && stripos($envio['no_orden'], $f_q) === false) continue;
-    $envios[] = $envio;
+$raiz = $raiz ?? '';
+if ($mensaje === '' && isset($_SESSION['mensaje'])) {
+    $mensaje = $_SESSION['mensaje'];
 }
-usort($envios, function ($a, $b) {
-    return strcmp($b['fecha'] . $b['hora'], $a['fecha'] . $a['hora']);
-});
-
-$titulo = 'Envíos';
-require __DIR__ . '/../encabezado.php';
+unset($_SESSION['mensaje']);
 ?>
-<div class="contenido">
-    <h1>Envíos contratados</h1>
-    <p>Todos los envíos que las tiendas han pedido, en cualquier etapa.</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars(trim((string) ($titulo))) ?> - Courier</title>
+    <link rel="stylesheet" href="<?= htmlspecialchars(trim((string) ($raiz))) ?>style.css">
+</head>
+<body>
+<header>
+    <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Courier</a>
+    <nav><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>rastreo.php">Rastrear paquete</a>
+    <?php if (isset($_SESSION['id'])): ?>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Menú</a>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>logout.php">Cerrar sesión</a>
+    <?php else: ?><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>login.php">Iniciar sesión</a><?php endif; ?>
+    </nav>
+</header>
+<main class="<?= !empty($formulario) ? 'formulario' : 'contenido' ?>">
+<h1><?= htmlspecialchars(trim((string) ($titulo))) ?></h1>
+<?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
-    <form method="get" action="listado.php" class="filtros">
-        <div>
-            <label for="estado">Estado</label>
-            <select id="estado" name="estado">
-                <option value="">Todos</option>
-                <?php foreach ($demo['estado'] as $estado): ?>
-                    <option value="<?= (int) $estado['id_estado'] ?>" <?= $f_estado === (string) $estado['id_estado'] ? 'selected' : '' ?>><?= h(nombre_estado($estado['id_estado'])) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div>
-            <label for="tienda">Tienda</label>
-            <select id="tienda" name="tienda">
-                <option value="">Todas</option>
-                <?php foreach ($demo['tienda'] as $tienda): ?>
-                    <option value="<?= h($tienda['id_tienda']) ?>" <?= $f_tienda === $tienda['id_tienda'] ? 'selected' : '' ?>><?= h($tienda['nombre']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div>
-            <label for="destino">Destino</label>
-            <select id="destino" name="destino">
-                <option value="">Todos</option>
-                <?php foreach ($demo['destino'] as $destino): ?>
-                    <option value="<?= h($destino['id_destino']) ?>" <?= $f_destino === $destino['id_destino'] ? 'selected' : '' ?>><?= h($destino['id_destino']) ?> - <?= h($destino['ciudad']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div>
-            <label for="q">Guía u orden</label>
-            <input type="search" id="q" name="q" value="<?= h($f_q) ?>" autocomplete="off">
-        </div>
-        <div>
-            <button type="submit">Filtrar</button>
-        </div>
-    </form>
-    <?php if ($hay_filtros): ?>
-        <p><?= count($envios) ?> envíos coinciden. <a href="listado.php">Limpiar filtros</a></p>
-    <?php else: ?>
-        <p><?= count($envios) ?> envíos en total.</p>
-    <?php endif; ?>
 
-    <div class="tabla">
-        <table>
-            <tr>
-                <th scope="col">Guía</th>
-                <th scope="col">Orden</th>
-                <th scope="col">Tienda</th>
-                <th scope="col">Destino</th>
-                <th scope="col">Fecha</th>
-                <th scope="col" class="num">Costo</th>
-                <th scope="col">Estado</th>
-            </tr>
-            <?php if (count($envios) === 0): ?>
-                <tr>
-                    <td colspan="7" class="vacio">Ningún envío coincide con estos filtros. <a href="listado.php">Limpiar filtros</a></td>
-                </tr>
-            <?php endif; ?>
-            <?php foreach ($envios as $envio): ?>
-                <?php
-                $tienda  = buscar('tienda', 'id_tienda', $envio['id_tienda']);
-                $destino = buscar('destino', 'id_destino', $envio['id_destino']);
-                ?>
-                <tr>
-                    <td class="codigo"><a href="detalle.php?guia=<?= h(rawurlencode($envio['no_guia'])) ?>"><?= h($envio['no_guia']) ?></a></td>
-                    <td class="nowrap"><?= h($envio['no_orden']) ?></td>
-                    <td><?= h($tienda['nombre'] ?? $envio['id_tienda']) ?></td>
-                    <td><?= h($envio['id_destino']) ?> - <?= h($destino['ciudad'] ?? '') ?></td>
-                    <td class="nowrap"><?= h(fecha($envio['fecha'])) ?> <?= h(hora($envio['hora'])) ?></td>
-                    <td class="num"><?= h(moneda($envio['costo_total'])) ?></td>
-                    <td><?= insignia_estado($envio['id_estado']) ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </table>
-    </div>
+<?php if ($_SESSION['admin']): ?><a class="button" href="../envios/agregar.php">Agregar envío</a><?php endif; ?>
+<form method="get" class="filtros">
+    <?php if (!isset($estado_fijo)): ?><div><label for="estado">Estado</label><select id="estado" name="estado"><option value="">Todos</option>
+    <?php while ($fila=pg_fetch_assoc($estados)): ?><option value="<?= htmlspecialchars(trim((string) ($fila['id_estado']))) ?>" <?= $estado===$fila['id_estado']?'selected':'' ?>><?= htmlspecialchars(trim((string) ($fila['nombre']))) ?></option><?php endwhile; ?>
+    </select></div><?php endif; ?>
+    <div><label for="guia">Guía</label><input type="text" id="guia" name="guia" maxlength="20" value="<?= htmlspecialchars(trim((string) ($guia))) ?>"></div>
+    <button>Filtrar</button>
+</form>
+<div class="tabla"><table>
+<tr><th>Guía</th><th>Fecha</th><th>Tienda</th><th>Destino</th><th>Destinatario</th><th>Estado</th><th>Total</th><th>Acciones</th></tr>
+<?php while ($fila=pg_fetch_assoc($result)): $g=rawurlencode(trim($fila['no_guia'])); ?>
+<tr><td><?= htmlspecialchars(trim((string) ($fila['no_guia']))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['fecha']))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['tienda']))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['destino']))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['destinatario']))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['estado']))) ?></td><td>Q<?= htmlspecialchars(trim((string) (number_format((float)$fila['costo_total'],2)))) ?></td>
+<td><a href="../envios/detalle.php?guia=<?= htmlspecialchars(trim((string) ($g))) ?>">Detalle</a>
+<?php if ((int)$fila['id_estado']<5): ?><a href="../seguimiento/agregar.php?guia=<?= htmlspecialchars(trim((string) ($g))) ?>">Cambiar estado</a><?php endif; ?>
+<?php if ($_SESSION['admin']): ?><a href="../envios/editar.php?guia=<?= htmlspecialchars(trim((string) ($g))) ?>">Editar</a><a href="../envios/eliminar.php?guia=<?= htmlspecialchars(trim((string) ($g))) ?>">Eliminar</a><?php endif; ?></td></tr>
+<?php endwhile; ?></table></div>
+<?php if (pg_num_rows($result)===0): ?><p>No hay envíos para estos filtros.</p><?php endif; ?>
+<div class="enlaces"><a href="../envios/listado.php">Todos los envíos</a><a href="../index.php">Menú principal</a></div>
+<?php ?>
+</main>
+<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+</body>
+</html>
 
-    <div class="enlaces">
-        <a href="../menu.php">Menú principal</a>
-    </div>
-</div>
-<?php require __DIR__ . '/../pie.php'; ?>
+<?php ?>

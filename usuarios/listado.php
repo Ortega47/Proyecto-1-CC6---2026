@@ -1,44 +1,56 @@
 <?php
 $raiz = '../';
-require __DIR__ . '/../solo_admin.php';
-require __DIR__ . '/../funciones.php';
-require __DIR__ . '/../datos_demo.php';
+require __DIR__.'/../auth.php';
+require_once __DIR__.'/../postsql.php';
+if (!$_SESSION['admin']) { header('Location: ../index.php'); exit; }
 
+$result = pg_query($conn, 'SELECT ID_usuario, Nombre, Usuario FROM Usuario ORDER BY ID_usuario');
 $titulo = 'Usuarios';
-require __DIR__ . '/../encabezado.php';
+$mensaje = '';
+
+$raiz = $raiz ?? '';
+if ($mensaje === '' && isset($_SESSION['mensaje'])) {
+    $mensaje = $_SESSION['mensaje'];
+}
+unset($_SESSION['mensaje']);
 ?>
-<div class="contenido">
-    <h1>Usuarios</h1>
-    <p>Personal que entra al sistema. Las contraseñas se guardan con hash y nunca se muestran.</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars(trim((string) ($titulo))) ?> - Courier</title>
+    <link rel="stylesheet" href="<?= htmlspecialchars(trim((string) ($raiz))) ?>style.css">
+</head>
+<body>
+<header>
+    <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Courier</a>
+    <nav><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>rastreo.php">Rastrear paquete</a>
+    <?php if (isset($_SESSION['id'])): ?>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Menú</a>
+        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>logout.php">Cerrar sesión</a>
+    <?php else: ?><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>login.php">Iniciar sesión</a><?php endif; ?>
+    </nav>
+</header>
+<main class="<?= !empty($formulario) ? 'formulario' : 'contenido' ?>">
+<h1><?= htmlspecialchars(trim((string) ($titulo))) ?></h1>
+<?php if ($mensaje !== ''): ?><p class="mensaje" role="status"><?= htmlspecialchars(trim((string) ($mensaje))) ?></p><?php endif; ?>
 
-    <div class="botones-listado">
-        <a class="boton" href="agregar.php">Agregar usuario</a>
-    </div>
 
-    <div class="tabla">
-        <table>
-            <tr>
-                <th scope="col">Nombre</th>
-                <th scope="col">Usuario</th>
-                <th scope="col">Rol</th>
-                <th scope="col">Acciones</th>
-            </tr>
-            <?php foreach ($demo['usuario'] as $usuario): ?>
-                <tr>
-                    <td><?= h($usuario['nombre']) ?><?= (int) $usuario['id_usuario'] === (int) $_SESSION['id_usuario'] ? ' (usted)' : '' ?></td>
-                    <td class="codigo"><?= h($usuario['usuario']) ?></td>
-                    <td><?= $usuario['es_admin'] ? 'Administrador' : 'Operador' ?></td>
-                    <td class="nowrap">
-                        <a href="editar.php?id=<?= (int) $usuario['id_usuario'] ?>">Editar</a> |
-                        <a href="eliminar.php?id=<?= (int) $usuario['id_usuario'] ?>">Eliminar</a>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </table>
-    </div>
+<a class="button" href="agregar.php">Agregar usuario</a>
+<div class="tabla"><table>
+<tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Acciones</th></tr>
+<?php while ($fila=pg_fetch_assoc($result)): ?>
+<tr><td><?= htmlspecialchars(trim((string) ($fila['id_usuario']))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['nombre']))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['usuario']))) ?></td>
+<td><?= (int)$fila['id_usuario']===0 ? 'Administrador' : 'Operador' ?></td>
+<td><a href="editar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_usuario']))) ?>">Editar</a>
+<?php if ((int)$fila['id_usuario']!==0): ?><a href="eliminar.php?id=<?= htmlspecialchars(trim((string) ($fila['id_usuario']))) ?>">Eliminar</a><?php endif; ?></td></tr>
+<?php endwhile; ?></table></div>
+<div class="enlaces"><a href="../index.php">Menú principal</a></div>
+<?php ?>
+</main>
+<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+</body>
+</html>
 
-    <div class="enlaces">
-        <a href="../menu.php">Menú principal</a>
-    </div>
-</div>
-<?php require __DIR__ . '/../pie.php'; ?>
+<?php ?>

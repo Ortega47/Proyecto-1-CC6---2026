@@ -6,38 +6,32 @@ if (!$_SESSION['admin']) { header('Location: ../index.php'); exit; }
 $mensaje = '';
 $id = $_GET['id'] ?? '';
 if (!is_string($id) || (filter_var($id, FILTER_VALIDATE_INT) === false || $id < 1 || $id > 2147483647)) { http_response_code(404); exit('Identificador no válido.'); }
-$result = pg_query_params($conn, 'SELECT id_tienda, no_orden, nombre, host FROM Tienda WHERE id_tienda=$1', [$id]);
+$result = pg_query_params($conn, 'SELECT id_origen, ciudad, cobertura FROM Origen WHERE id_origen=$1', [$id]);
 $fila = pg_fetch_assoc($result);
 if (!$fila) { http_response_code(404); exit('El registro no existe.'); }
-$id_tienda = trim((string)$fila['id_tienda']);
-$no_orden = trim((string)$fila['no_orden']);
-$nombre = trim((string)$fila['nombre']);
-$host = trim((string)$fila['host']);
+$id_origen = trim((string)$fila['id_origen']);
+$ciudad = trim((string)$fila['ciudad']);
+$cobertura = trim((string)$fila['cobertura']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formulario_correcto = is_string($_POST['token'] ?? null) && hash_equals($_SESSION['token'], $_POST['token']);
-    $no_orden = (is_string($_POST['no_orden'] ?? null) ? trim($_POST['no_orden']) : '');
-    $nombre = (is_string($_POST['nombre'] ?? null) ? trim($_POST['nombre']) : '');
-    $host = (is_string($_POST['host'] ?? null) ? trim($_POST['host']) : '');
+    $ciudad = (is_string($_POST['ciudad'] ?? null) ? trim($_POST['ciudad']) : '');
+    $cobertura = (is_string($_POST['cobertura'] ?? null) ? trim($_POST['cobertura']) : '');
     if (!$formulario_correcto) {
         $mensaje = 'Recarga el formulario e inténtalo de nuevo.';
     }
     elseif (
-        (filter_var($id_tienda, FILTER_VALIDATE_INT) === false ||
-        $id_tienda < 1 ||
-        $id_tienda > 2147483647) ||
-        (filter_var($no_orden, FILTER_VALIDATE_INT) === false ||
-        $no_orden < 1 ||
-        $no_orden > 2147483647) ||
-        ($nombre === '' ||
-        mb_strlen($nombre) > 150) ||
-        ($host === '' ||
-        mb_strlen($host) > 255)
+        (filter_var($id_origen, FILTER_VALIDATE_INT) === false ||
+        $id_origen < 1 ||
+        $id_origen > 2147483647) ||
+        ($ciudad === '' ||
+        mb_strlen($ciudad) > 100) ||
+        !in_array($cobertura, ['SI','NO'], true)
     ) {
         $mensaje = 'Revisa los campos: IDs positivos, textos completos e importes no negativos.';
     }
     else {
-        $result = @pg_query_params($conn, 'UPDATE Tienda SET no_orden=$1, nombre=$2, host=$3 WHERE id_tienda=$4', [$no_orden, $nombre, $host, $id]);
+        $result = @pg_query_params($conn, 'UPDATE Origen SET ciudad=$1, cobertura=$2 WHERE id_origen=$3', [$ciudad, $cobertura, $id]);
         if ($result) {
             $_SESSION['mensaje'] = 'Registro guardado correctamente.';
             header('Location: listado.php'); exit;
@@ -45,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mensaje = 'No se pudo guardar. Comprueba que el ID no esté repetido y las referencias existan.';
     }
 }
-$titulo = 'Editar tienda';
+$titulo = 'Editar origen';
 $formulario = true;
 
 $raiz = $raiz ?? '';
@@ -79,14 +73,15 @@ unset($_SESSION['mensaje']);
 
 <form method="post">
     <input type="hidden" name="token" value="<?= htmlspecialchars(trim((string) ($_SESSION['token']))) ?>">
-    <label for="id_tienda">ID de tienda</label>
-    <input id="id_tienda" name="id_tienda" type="number" min="1" max="2147483647" step="1" readonly required value="<?= htmlspecialchars(trim((string) ($id_tienda))) ?>">
-    <label for="no_orden">Número de orden</label>
-    <input id="no_orden" name="no_orden" type="number" min="1" max="2147483647" step="1" required value="<?= htmlspecialchars(trim((string) ($no_orden))) ?>">
-    <label for="nombre">Nombre</label>
-    <input id="nombre" name="nombre" type="text" maxlength="150" required value="<?= htmlspecialchars(trim((string) ($nombre))) ?>">
-    <label for="host">Host de la tienda</label>
-    <input id="host" name="host" type="text" maxlength="255" required value="<?= htmlspecialchars(trim((string) ($host))) ?>">
+    <label for="id_origen">ID del origen</label>
+    <input id="id_origen" name="id_origen" type="number" min="1" max="2147483647" step="1" readonly required value="<?= htmlspecialchars(trim((string) ($id_origen))) ?>">
+    <label for="ciudad">Ciudad</label>
+    <input id="ciudad" name="ciudad" type="text" maxlength="100" required value="<?= htmlspecialchars(trim((string) ($ciudad))) ?>">
+    <label for="cobertura">Cobertura</label>
+    <select id="cobertura" name="cobertura" required>
+        <option value="SI" <?= in_array(mb_strtoupper($cobertura),['SI','SÍ','TRUE','1']) ? 'selected' : '' ?>>Sí</option>
+        <option value="NO" <?= in_array(mb_strtoupper($cobertura),['NO','FALSE','0']) ? 'selected' : '' ?>>No</option>
+    </select>
     <button>Guardar</button>
 </form>
 <div class="enlaces"><a href="listado.php">Volver al listado</a><a href="../index.php">Menú principal</a></div>

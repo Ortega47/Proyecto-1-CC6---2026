@@ -1,5 +1,9 @@
 # Contrato del WebService (API-REST)
 
+> Pendiente para la siguiente etapa. Este documento conserva el contrato de
+> integración; todavía no hay endpoints implementados. Las consultas y pasos
+> internos se adaptarán al esquema actual de ocho tablas antes de programarlos.
+
 Los nombres de parámetros, etiquetas XML y llaves JSON son **literales**. No se traducen,
 no se renombran, no se les cambia la capitalización. Otro grupo consume estas respuestas.
 
