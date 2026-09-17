@@ -1,8 +1,9 @@
 # Courier — Proyecto 1 CC6
 
 Hecho con la misma organización del proyecto de CC5: PHP directo, PostgreSQL,
-una carpeta por módulo y un solo CSS. No usa Docker, frameworks ni datos demo.
-El WebService se agregará después.
+una carpeta por módulo y un solo CSS. No usa frameworks ni datos demo.
+El Dockerfile se usa únicamente para alojarlo en Render; para trabajar en local
+basta PHP o XAMPP. El WebService se agregará después.
 
 ## Para iniciarlo
 
@@ -33,6 +34,26 @@ ALTER TABLE Usuario ALTER COLUMN Contraseña TYPE varchar(255);
 Este ajuste conserva los registros. No se ejecuta automáticamente desde PHP.
 La conexión también admite las variables `DB_HOST`, `DB_PORT`, `DB_NAME`,
 `DB_USER` y `DB_PASSWORD`, como la referencia de CC5.
+
+## Publicarlo en Render
+
+El servicio de Render debe usar **Docker**, la rama **main**, la raíz del
+repositorio como directorio y `./Dockerfile` como Dockerfile Path. Deja
+**Docker Command** vacío para usar el inicio definido en el archivo.
+El contenedor incluye PHP, Apache y las extensiones `pgsql` y `mbstring`.
+
+En **Environment** configura `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y
+`DB_PASSWORD` con los datos de la base que ya tiene tus tablas. `localhost`
+en Render apunta al contenedor, no a tu computadora. Si usas PostgreSQL en
+Render, utiliza su hostname interno cuando ambos servicios estén en la misma
+región. No guardes la contraseña en GitHub.
+
+Después de subir cambios, usa **Manual Deploy → Deploy latest commit** si
+el despliegue automático no comienza. Puedes abrir `/conexion.php` para
+comprobar la conexión. Debe existir un administrador con ID 0 en esa base:
+la creación inicial desde `register.php` está restringida a localhost.
+
+Referencia: https://render.com/docs/docker
 
 ## Archivos: la misma lógica de CC5
 

@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+.vscode
+.idea
+__pycache__
+*.log
+*.zip
+docs
+README.md
+tmp
+tests
