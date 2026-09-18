@@ -10,13 +10,12 @@ basta PHP o XAMPP. El WebService se agregará después.
 1. Usa tu base de datos existente con las ocho tablas que ya creaste.
 2. Comprueba que Estado tenga los cinco estados del courier y que Contraseña
    admita 255 caracteres. No es necesario recrear tus tablas.
-3. Edita los cinco datos de conexión al principio de **postsql.php**:
-   servidor, puerto, base, usuario y contraseña.
+3. Configura `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`
+   en el entorno donde ejecutas PHP, como en CC5.
 4. Usa PHP 8.1 o superior con `pgsql` y `mbstring` activadas en `php.ini`.
-   Con XAMPP, coloca el proyecto en `htdocs/courier` y abre
-   `http://localhost/courier/login.php`.
-   También puedes ejecutar `php -S localhost:8000` desde la carpeta del proyecto
-   y abrir `http://localhost:8000/login.php`.
+   Ejecuta `php -S localhost:8000` desde la carpeta del proyecto y abre
+   `http://localhost:8000/login.php`. En Apache/XAMPP, configura esta carpeta
+   como raíz del sitio. El acceso usa `/login.php`, igual que el flujo de CC5.
 5. Abre **login.php** para iniciar sesión. El enlace **Regístrate** permite
    crear una cuenta de cliente con nombre, usuario y contraseña.
 
@@ -64,7 +63,7 @@ Referencia: https://render.com/docs/docker
 |---|---|
 | `postsql.php` | Abre la conexión con `pg_connect` |
 | `conexion.php` | Comprueba si PostgreSQL está disponible |
-| `auth.php` | Revisa la sesión y distingue administrador/cliente |
+| `auth.php` | Comprueba que exista una sesión |
 | `login.php`, `register.php`, `logout.php` | Acceso y registro público de clientes |
 | `index.php` | Menú principal |
 | `origenes/`, `destinos/`, `tiendas/` | Listar, agregar, editar y eliminar |
@@ -75,8 +74,20 @@ Referencia: https://render.com/docs/docker
 | `rastreo.php` | Consulta pública por número de guía |
 | `style.css` | Estilos; cada página contiene su propio HTML |
 
+El estilo sigue CC5: PHP al inicio, variables de formulario, consultas en
+`$query`, resultados en `$result`, bloques `if/else` con llaves y `echo` explícito.
+Cada pantalla agrupa PHP en uno o dos bloques; formularios y tablas se imprimen
+juntos. No hay operadores ternarios ni `??`. `auth.php` solo comprueba la sesión; cada página de gestión comprueba
+`$_SESSION["admin"]`, como en CC5. No hay tokens de formulario. El registro
+inicia sesión automáticamente como cliente, sin confirmar la contraseña.
+No usa etiquetas `<?= ?>`, `endif` ni `htmlspecialchars`. Los valores se
+imprimen directamente, como en el proyecto de referencia.
 No hay funciones propias ni archivos de plantillas. Cada página lee `$_POST`,
 valida con `if`, ejecuta su consulta y muestra su formulario o tabla.
+
+Los archivos `agregar.php` y `editar.php` leen los campos directamente y usan comprobaciones
+breves del negocio antes de guardar; PostgreSQL comprueba tipos, tamaños y
+referencias. El registro actual se consulta por su ID para llenar el formulario.
 
 Cada módulo tiene su SQL en `listado.php`, `agregar.php`, `editar.php` y
 `eliminar.php`, como Equipos y Fases en CC5. Para editar se consulta la fila por
