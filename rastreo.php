@@ -37,7 +37,7 @@ unset($_SESSION['mensaje']);
     <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Courier</a>
     <nav><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>rastreo.php">Rastrear paquete</a>
     <?php if (isset($_SESSION['id'])): ?>
-        <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>index.php">Menú</a>
+        <?php if (empty($_SESSION['cliente'])): ?><a href="index.php">Menú</a><?php endif; ?>
         <a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>logout.php">Cerrar sesión</a>
     <?php else: ?><a href="<?= htmlspecialchars(trim((string) ($raiz))) ?>login.php">Iniciar sesión</a><?php endif; ?>
     </nav>
@@ -54,7 +54,7 @@ unset($_SESSION['mensaje']);
 <div class="tabla"><table><tr><th>Fecha</th><th>Hora</th><th>Estado</th></tr>
 <?php while ($fila=pg_fetch_assoc($historial)): ?><tr><td><?= htmlspecialchars(trim((string) ($fila['fecha']))) ?></td><td><?= htmlspecialchars(trim((string) (substr($fila['hora'],0,5)))) ?></td><td><?= htmlspecialchars(trim((string) ($fila['estado']))) ?></td></tr><?php endwhile; ?>
 </table></div><?php endif; ?>
-<p><a href="login.php">Acceso del personal</a></p>
+<?php if (!isset($_SESSION['id'])): ?><p><a href="login.php">Iniciar sesión</a> · <a href="register.php">Crear cuenta</a></p><?php endif; ?>
 <?php ?>
 </main>
 <footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>

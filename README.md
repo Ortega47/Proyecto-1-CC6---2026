@@ -14,15 +14,18 @@ basta PHP o XAMPP. El WebService se agregará después.
    servidor, puerto, base, usuario y contraseña.
 4. Usa PHP 8.1 o superior con `pgsql` y `mbstring` activadas en `php.ini`.
    Con XAMPP, coloca el proyecto en `htdocs/courier` y abre
-   `http://localhost/courier/conexion.php`.
+   `http://localhost/courier/login.php`.
    También puedes ejecutar `php -S localhost:8000` desde la carpeta del proyecto
-   y abrir `http://localhost:8000/conexion.php`.
-5. Abre **login.php**. Si no hay usuarios, aparece **Crear primer administrador**.
-   Hazlo desde localhost. Después inicia sesión.
+   y abrir `http://localhost:8000/login.php`.
+5. Abre **login.php** para iniciar sesión. El enlace **Regístrate** permite
+   crear una cuenta de cliente con nombre, usuario y contraseña.
 
-Igual que en CC5, **el ID 0 es administrador** y los demás son operadores.
+Igual que en CC5, **el ID 0 es administrador** y los demás son clientes.
 Si ya tienes usuarios, debe existir uno con ID 0 para administrar el sitio.
-No hay una contraseña predeterminada. La única ampliación del esquema es
+No hay una contraseña predeterminada. El registro público nunca crea administradores.
+Como en CC5, las cuentas se crean mediante el registro; no hay un módulo para
+agregar, editar o eliminar usuarios, ni cambio o recuperación de contraseña.
+No se necesitan columnas ni tablas nuevas para los clientes. La ampliación del esquema es
 `Contraseña varchar(255)` para guardar hashes; `Usuario` debe ser único.
 Las claves antiguas en texto se convierten a hash al iniciar sesión.
 Si tu columna sigue siendo `char(50)`, ejecuta una sola vez en pgAdmin:
@@ -49,9 +52,9 @@ Render, utiliza su hostname interno cuando ambos servicios estén en la misma
 región. No guardes la contraseña en GitHub.
 
 Después de subir cambios, usa **Manual Deploy → Deploy latest commit** si
-el despliegue automático no comienza. Puedes abrir `/conexion.php` para
-comprobar la conexión. Debe existir un administrador con ID 0 en esa base:
-la creación inicial desde `register.php` está restringida a localhost.
+el despliegue automático no comienza. El administrador puede abrir `/conexion.php` para
+comprobar la conexión. Debe existir un administrador con ID 0 en esa base.
+`register.php` permite el registro público de clientes también en Render.
 
 Referencia: https://render.com/docs/docker
 
@@ -61,10 +64,10 @@ Referencia: https://render.com/docs/docker
 |---|---|
 | `postsql.php` | Abre la conexión con `pg_connect` |
 | `conexion.php` | Comprueba si PostgreSQL está disponible |
-| `auth.php` | Revisa la sesión y distingue administrador/operador |
-| `login.php`, `register.php`, `logout.php` | Acceso y creación inicial del administrador |
+| `auth.php` | Revisa la sesión y distingue administrador/cliente |
+| `login.php`, `register.php`, `logout.php` | Acceso y registro público de clientes |
 | `index.php` | Menú principal |
-| `origenes/`, `destinos/`, `tiendas/`, `usuarios/` | Listar, agregar, editar y eliminar |
+| `origenes/`, `destinos/`, `tiendas/` | Listar, agregar, editar y eliminar |
 | `cabeceras/` | Rutas con costo de envío y manejo |
 | `envios/` | Registrar, consultar, editar y eliminar envíos |
 | `estados/` | Catálogo y una pantalla por cada uno de los cinco estados |
@@ -92,8 +95,12 @@ formularios usan `pg_query_params`.
    hora y observación. La entrega guarda su fecha automáticamente.
 6. Usa **Rastrear paquete** para consultar la guía sin iniciar sesión.
 
-Los operadores consultan catálogos y avanzan envíos. El administrador mantiene
-los datos. No se eliminan catálogos que estén en uso ni el administrador.
+Los clientes acceden al rastreo por número de guía. No pueden acceder a los
+catálogos, listados internos ni modificar envíos, incluso con una URL directa.
+El administrador mantiene los datos y avanza los envíos. No existe el rol de
+operador. Las cuentas existentes con ID distinto de 0 ahora son clientes.
+El esquema actual no vincula envíos a cuentas: no hay un listado de «mis envíos».
+No se eliminan catálogos que estén en uso ni el administrador.
 Los cinco estados se conservan; se puede cambiar su nombre. En Seguimiento se
 edita la observación; para corregir un avance equivocado se puede eliminar solo
 el último, regresando el envío al anterior. La orden inicial se conserva.

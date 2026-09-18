@@ -19,6 +19,5 @@ if ($conn) {
     pg_query($conn, "SET TIME ZONE 'America/Guatemala'");
 } elseif (empty($probar_conexion)) {
     http_response_code(503);
-    $base = $raiz ?? '';
-    exit('No se pudo conectar con PostgreSQL. Revisa postsql.php y la extensión pgsql de PHP. <a href="'.$base.'conexion.php">Comprobar conexión</a>');
+    exit('El servicio no está disponible en este momento. Inténtalo de nuevo más tarde.');
 }

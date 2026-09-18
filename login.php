@@ -32,15 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             session_regenerate_id(true);
             $_SESSION['id'] = (int)$fila['id_usuario'];
             $_SESSION['nombre'] = trim($fila['nombre']);
-            $_SESSION['admin'] = $_SESSION['id'] === 0;
-            header('Location: index.php'); exit;
+            $_SESSION['cliente'] = $_SESSION['id'] !== 0;
+            $_SESSION['admin'] = $_SESSION['id'] === 0 && !$_SESSION['cliente'];
+            header('Location: '.($_SESSION['cliente'] ? 'rastreo.php' : 'index.php')); exit;
         }
         if ($mensaje === '') {
             $mensaje = 'Usuario o contraseña incorrectos.';
         }
     }
 }
-$cantidad = pg_fetch_result(pg_query($conn, 'SELECT COUNT(*) FROM Usuario'),0,0);
 $titulo = 'Iniciar sesión';
 $formulario = true;
 
@@ -81,8 +81,7 @@ unset($_SESSION['mensaje']);
     <input id="contrasena" name="contrasena" type="password" required autocomplete="current-password">
     <button>Iniciar sesión</button>
 </form>
-<?php if ((int)$cantidad === 0): ?><p><a href="register.php">Crear primer administrador</a></p><?php endif; ?>
-<p><a href="conexion.php">Comprobar conexión a PostgreSQL</a></p>
+<p>¿No tienes cuenta? <a href="register.php">Regístrate</a></p>
 <?php ?>
 </main>
 <footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>

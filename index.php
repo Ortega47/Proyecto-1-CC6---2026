@@ -34,7 +34,7 @@ unset($_SESSION['mensaje']);
 
 
 <p>Bienvenido, <b><?= htmlspecialchars(trim((string) ($_SESSION['nombre']))) ?></b>.</p>
-<p><?= $_SESSION['admin'] ? 'Administrador' : 'Operador' ?></p>
+<p>Administrador</p>
 <div class="menu">
     <a class="button" href="envios/listado.php">Envíos</a>
     <a class="button" href="seguimiento/listado.php">Seguimiento</a>
@@ -49,9 +49,7 @@ unset($_SESSION['mensaje']);
     <a class="button" href="cabeceras/listado.php">Rutas y tarifas</a>
     <a class="button" href="tiendas/listado.php">Tiendas</a>
     <?php if ($_SESSION['admin']): ?>
-    <a class="button" href="usuarios/listado.php">Usuarios</a>
     <a class="button" href="estados/listado.php">Catálogo de estados</a>
-    <a class="button" href="conexion.php">Comprobar conexión</a>
     <?php endif; ?>
     <a class="button secundario" href="rastreo.php">Rastrear un paquete</a>
 </div>

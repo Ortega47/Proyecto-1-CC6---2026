@@ -1,6 +1,6 @@
 <?php
-session_start();
-date_default_timezone_set('America/Guatemala');
+require __DIR__.'/auth.php';
+if (!$_SESSION['admin']) { header('Location: index.php'); exit; }
 
 $probar_conexion = true;
 require __DIR__.'/postsql.php';
