@@ -120,12 +120,29 @@ Eliminar un envío borra todo su seguimiento, previa confirmación.
 Los IDs de catálogos se ingresan manualmente, como en tus tablas y en CC5.
 Los IDs de Seguimiento se asignan al registrar cada avance.
 
-## Pendiente: WebService
+## WebService
 
-Esta etapa cubre las pantallas locales del courier. Las llamadas `/consulta`,
-`/envio` y `/status` en XML/JSON se harán después según el PDF.
-Para esa integración habrá que acordar los códigos públicos de destino y
-courier, y revisar la dirección y el número de orden por envío: las tablas
-compartidas no tienen dirección y guardan `No_orden` en Tienda.
-El enunciado y el contrato están en `docs/`; el modelo actual está en
-`docs/04_modelo_datos.md`.
+Los tres endpoints del contrato están en `ws/` y son públicos (sin sesión):
+
+| Ruta del contrato | Archivo | Devuelve |
+|---|---|---|
+| `/consulta?destino=&formato=` | `ws/consulta.php` | `courrier`, `destino`, `cobertura`, `costo` |
+| `/envio?orden=&destinatario=&destino=&direccion=&tienda=` | `ws/envio.php` | `courrier`, `orden`, `tienda`, `destino`, `guia`, `status`, `costo`, `fecha`, `hora` |
+| `/status?orden=&tienda=&formato=` | `ws/status.php` | `courrier`, `orden`, `status` |
+
+`formato` acepta `XML` o `JSON`; sin él responde XML. Las rutas cortas las
+reescribe el `.htaccess` de la raíz (Apache con `mod_rewrite`, ya habilitado en
+el Dockerfile); con `php -S` se usan directo `ws/consulta.php`, `ws/envio.php`
+y `ws/status.php`. El código del courier, el origen fijo y el prefijo de la
+guía están en `ws/config.php`. Ejemplos, campos y pendientes de acuerdo con la
+Tienda Virtual: `docs/06_webservice.md`.
+
+**Antes de usarlo, ejecuta una sola vez en pgAdmin `db/ws_cambios.sql`**, que
+agrega a `Envio` las columnas `Direccion` y `No_orden` y la restricción única
+tienda + orden. Además debe existir el administrador con ID 0 (firma el primer
+seguimiento de cada envío) y el origen configurado en `ws/config.php` con
+cobertura y sus cabeceras.
+
+Pendiente: acordar con el grupo de Tienda Virtual el largo de la guía, el
+código de tienda que mandan, el host real de cada sitio y la estructura de la
+respuesta de `/envio`; y fijar el código definitivo del courier.

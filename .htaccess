@@ -1,0 +1,10 @@
+# Rutas del WebService según el contrato: /consulta, /envio y /status.
+# Se reescriben hacia ws/*.php conservando los parámetros (?destino=...&formato=...).
+# Las rutas ws/consulta.php, ws/envio.php y ws/status.php siguen funcionando directo.
+# Las reglas son relativas a esta carpeta, así que sirven en la raíz o en una subcarpeta.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^consulta/?$ ws/consulta.php [L,QSA]
+    RewriteRule ^envio/?$ ws/envio.php [L,QSA]
+    RewriteRule ^status/?$ ws/status.php [L,QSA]
+</IfModule>

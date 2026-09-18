@@ -6,6 +6,12 @@ RUN apt-get update \
     && docker-php-ext-install pgsql mbstring \
     && rm -rf /var/lib/apt/lists/*
 
+# El WebService usa /consulta, /envio y /status: se habilita mod_rewrite y se
+# permite el .htaccess de la raíz (AllowOverride All) para reescribirlas a ws/*.php.
+RUN a2enmod rewrite \
+    && printf '<Directory /var/www/html>\n    AllowOverride All\n</Directory>\n' > /etc/apache2/conf-available/reescritura.conf \
+    && a2enconf reescritura
+
 COPY . /var/www/html/
 
 ENV PORT=10000
