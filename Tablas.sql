@@ -8,7 +8,7 @@ create table Usuario (
     ID_usuario int PRIMARY KEY,
     Nombre char(50),
     Usuario char(50),
-    Contraseña char(50)
+    Contraseña varchar(255)
 );
  
 create table Origen (
@@ -50,9 +50,12 @@ create table Envio (
     ID_estado int NOT NULL,
     ID_cabecera int NOT NULL,
     ID_tienda int NOT NULL,
+    Direccion varchar(255),
+    No_orden varchar(20),
     FOREIGN KEY (ID_estado) REFERENCES Estado(ID_estado),
     FOREIGN KEY (ID_cabecera) REFERENCES Cabeceras(ID_cabecera),
-    FOREIGN KEY (ID_tienda) REFERENCES Tienda(ID_tienda)
+    FOREIGN KEY (ID_tienda) REFERENCES Tienda(ID_tienda),
+    CONSTRAINT uq_envio_orden UNIQUE (ID_tienda, No_orden)
 );
  
 create table Seguimiento (
@@ -67,3 +70,10 @@ create table Seguimiento (
     FOREIGN KEY (ID_estado) REFERENCES Estado(ID_estado),
     FOREIGN KEY (ID_usuario) REFERENCES Usuario(ID_usuario)
 );
+
+insert into Estado (ID_estado, Orden, Nombre) values
+    (1, 1, 'Orden nueva'),
+    (2, 2, 'Surtiendose'),
+    (3, 3, 'Empacandose'),
+    (4, 4, 'En ruta'),
+    (5, 5, 'Entregada');
