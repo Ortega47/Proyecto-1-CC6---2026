@@ -36,7 +36,7 @@
 </head>
 <body>
 <header>
-    <a href="index.php">🐳 Winni Express</a>
+    <a href="index.php">Winni Express</a>
     <nav><a href="rastreo.php">Rastrear paquete</a>
     <?php
     if (isset($_SESSION['id'])) {
@@ -74,6 +74,6 @@
     }
 ?>
 </main>
-<footer>🐳 Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+<footer>Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
 </body>
 </html>

@@ -72,6 +72,6 @@
     echo '<a href="listado.php">Volver al listado</a>';
 ?>
 </main>
-<footer>🐳 Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+<footer>Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
 </body>
 </html>

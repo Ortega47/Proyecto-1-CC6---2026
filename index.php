@@ -17,7 +17,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú del courier - 🐳 Winni Express</title>
+    <title>Menú del courier - Winni Express</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -52,6 +52,6 @@
     echo '</div>';
 ?>
 </main>
-<footer>🐳 Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+<footer>Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
 </body>
 </html>
