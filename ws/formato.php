@@ -1,5 +1,5 @@
 <?php
-    // Salida del WebService. Única excepción del proyecto a "sin funciones propias":
+    // Salida del WebService.
     // dos funciones chicas que imprimen la respuesta en XML o en JSON, las dos a mano,
     // sin json_encode ni librerías de XML.
     // Reciben el nombre de la raíz y un arreglo asociativo campo => valor,

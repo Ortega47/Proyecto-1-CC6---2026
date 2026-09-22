@@ -56,7 +56,7 @@
 </head>
 <body>
 <header>
-    <a href="index.php">Courier</a>
+    <a href="index.php">🐳 Winni Express</a>
     <nav><a href="rastreo.php">Rastrear paquete</a>
     <?php
     if (isset($_SESSION['id'])) {
@@ -85,6 +85,6 @@
     echo '<p>¿No tienes cuenta? <a href="register.php">Regístrate</a></p>';
 ?>
 </main>
-<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+<footer>🐳 Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
 </body>
 </html>

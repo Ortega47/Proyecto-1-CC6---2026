@@ -1,9 +1,9 @@
 <?php
-    // Configuración del WebService. Solo constantes; nada de tablas.
+    // Configuración del WebService.
 
     // Código del courier: 15 caracteres. Viaja en el campo "courrier" de las
     // respuestas y es el que las tiendas virtuales guardan para identificarnos.
-    // Provisional hasta acordarlo con los grupos de Tienda Virtual.
+    // Provisional
     define("CODIGO_COURIER", "000000000000001");
 
     // ID_origen (tabla Origen) desde donde salen todos los envíos.

@@ -82,6 +82,6 @@
     echo '<div class="enlaces"><a href="listado.php">Volver al listado</a><a href="../index.php">Menú principal</a></div>';
 ?>
 </main>
-<footer>Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
+<footer>🐳 Winni Express · Courier · Proyecto 1 · Ciencias de la Computación VI</footer>
 </body>
 </html>
