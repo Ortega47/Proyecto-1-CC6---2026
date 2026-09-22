@@ -1,7 +1,5 @@
 <?php
-    // WebService: GET /consulta?destino=____&formato=____
-    // Responde cobertura y costo (envío + manejo) desde el origen fijo hacia el destino.
-    // Es público: sin sesión y sin redirecciones. Siempre responde en XML o JSON.
+
     ini_set("display_errors", "0");
     date_default_timezone_set("America/Guatemala");
     require __DIR__ . "/config.php";
@@ -17,7 +15,6 @@
         $destino = trim($_GET["destino"]);
     }
 
-    // El código público tiene 5 caracteres con ceros a la izquierda; en la base es entero.
     $id_destino = -1;
     $codigo_destino = $destino;
     if ($destino != "" && ctype_digit($destino)) {
@@ -32,8 +29,7 @@
     if ($_SERVER["REQUEST_METHOD"] != "GET") {
         $codigo_http = 405;
     } else if ($id_destino >= 0) {
-        // Misma conexión que postsql.php, pero sin die(): el servicio debe responder
-        // en el formato pedido aunque la base no esté disponible.
+     
         $host = getenv("DB_HOST");
         $port = getenv("DB_PORT");
         if (!$port) {
@@ -51,8 +47,7 @@
             pg_set_client_encoding($conn, "UTF8");
             pg_query($conn, "SET TIME ZONE 'America/Guatemala'");
 
-            // Cabecera del origen fijo hacia el destino pedido. Si hay varias, la de menor ID.
-            // Cobertura es texto ('SI' / 'NO'); se traduce a 1 / 0 igual que en envios/agregar.php.
+           
             $query = "SELECT CASE WHEN UPPER(TRIM(d.Cobertura)) IN ('SI','SÍ','TRUE','1') THEN 1 ELSE 0 END AS cobertura_destino,
                              CASE WHEN UPPER(TRIM(o.Cobertura)) IN ('SI','SÍ','TRUE','1') THEN 1 ELSE 0 END AS cobertura_origen,
                              c.costo_envio + c.costo_manejo AS costo
@@ -68,7 +63,6 @@
                 $codigo_http = 500;
             } else {
                 $fila = pg_fetch_assoc($result);
-                // Hay cobertura solo si el destino y el origen la tienen y existe la ruta con tarifa.
                 if ($fila && $fila["cobertura_destino"] == 1 && $fila["cobertura_origen"] == 1 && $fila["costo"] !== null) {
                     $cobertura = "TRUE";
                     $costo = number_format((float) $fila["costo"], 2, ".", "");

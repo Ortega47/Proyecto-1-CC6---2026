@@ -1,7 +1,5 @@
 <?php
-    // WebService: GET /envio?orden=&destinatario=&destino=&direccion=&tienda=&formato=
-    // Registra un envío pedido por una tienda virtual y devuelve la guía generada.
-    // Es público: sin sesión y sin redirecciones. Siempre responde en XML o JSON.
+    
     ini_set("display_errors", "0");
     date_default_timezone_set("America/Guatemala");
     require __DIR__ . "/config.php";
@@ -33,7 +31,6 @@
         $tienda = trim($_GET["tienda"]);
     }
 
-    // Los códigos públicos llevan ceros a la izquierda (destino 5, tienda 15); en la base son enteros.
     $id_destino = -1;
     $codigo_destino = $destino;
     if ($destino != "" && ctype_digit($destino)) {
@@ -59,20 +56,17 @@
         $codigo_http = 405;
         $mensaje = "Solo se acepta el método GET.";
     } else if ($orden == "" || $destinatario == "" || $destino == "" || $direccion == "" || $tienda == "") {
-        // a) datos obligatorios
         $mensaje = "Faltan datos: orden, destinatario, destino, direccion y tienda son obligatorios.";
     } else if (strlen($orden) > 20) {
         $mensaje = "El número de orden tiene más de 20 caracteres.";
     } else if (strlen($direccion) > 255) {
         $mensaje = "La dirección tiene más de 255 caracteres.";
     } else if ($id_tienda < 0) {
-        // b) el código de tienda no es numérico, así que no puede existir
         $mensaje = "La tienda no existe.";
     } else if ($id_destino < 0) {
         $mensaje = "El destino no existe.";
     } else {
-        // Misma conexión que postsql.php, pero sin die(): el servicio debe responder
-        // en el formato pedido aunque la base no esté disponible.
+
         $host = getenv("DB_HOST");
         $port = getenv("DB_PORT");
         if (!$port) {
@@ -90,8 +84,7 @@
         } else {
             pg_set_client_encoding($conn, "UTF8");
             pg_query($conn, "SET TIME ZONE 'America/Guatemala'");
-
-            // b) la tienda existe
+e
             $query = "SELECT ID_tienda FROM Tienda WHERE ID_tienda = $1";
             $result = @pg_query_params($conn, $query, [$id_tienda]);
             $cabecera = false;
@@ -102,8 +95,6 @@
             } else if (pg_num_rows($result) == 0) {
                 $mensaje = "La tienda no existe.";
             } else {
-                // c) el destino existe y tiene cobertura, igual que el origen fijo.
-                // Cobertura es texto ('SI' / 'NO'); se traduce a 1 / 0 como en envios/agregar.php.
                 $query = "SELECT CASE WHEN UPPER(TRIM(d.Cobertura)) IN ('SI','SÍ','TRUE','1') THEN 1 ELSE 0 END AS cobertura_destino,
                                  (SELECT CASE WHEN UPPER(TRIM(o.Cobertura)) IN ('SI','SÍ','TRUE','1') THEN 1 ELSE 0 END
                                   FROM Origen o WHERE o.ID_origen = $2) AS cobertura_origen
@@ -125,7 +116,6 @@
                 } else if ($fila["cobertura_origen"] != 1) {
                     $mensaje = "El origen del courier no tiene cobertura.";
                 } else {
-                    // d) existe una Cabecera (ruta con tarifa) del origen fijo al destino; si hay varias, la de menor ID.
                     $query = "SELECT ID_cabecera, costo_envio + costo_manejo AS costo
                               FROM Cabeceras
                               WHERE ID_origen = $1 AND ID_destino = $2
@@ -142,7 +132,6 @@
                     } else if (!$cabecera) {
                         $mensaje = "No hay ruta con tarifa hacia ese destino.";
                     } else {
-                        // e) la tienda no ha mandado ya esa misma orden
                         $query = "SELECT No_guia FROM Envio WHERE ID_tienda = $1 AND No_orden = $2";
                         $result = @pg_query_params($conn, $query, [$id_tienda, $orden]);
 
@@ -157,13 +146,10 @@
             }
 
             if ($mensaje == "" && $cabecera) {
-                // Todo pasó. La guía, el envío y su primer seguimiento se guardan juntos.
                 pg_query($conn, "BEGIN");
                 pg_query($conn, "LOCK TABLE Envio IN EXCLUSIVE MODE");
 
-                // Guía = prefijo + correlativo con ceros a la izquierda (15 caracteres en total).
-                // Solo cuentan las guías del servicio (prefijo seguido de dígitos); las manuales se ignoran.
-                // $2::int es necesario: sin el tipo, PostgreSQL toma SUBSTRING(... FROM $2) como patrón y no como posición.
+                
                 $query = "SELECT COALESCE(MAX(CAST(SUBSTRING(TRIM(No_guia) FROM $2::int) AS BIGINT)), 0) + 1 AS siguiente
                           FROM Envio
                           WHERE TRIM(No_guia) ~ $1";

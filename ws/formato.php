@@ -1,9 +1,4 @@
 <?php
-    // Salida del WebService.
-    // dos funciones chicas que imprimen la respuesta en XML o en JSON, las dos a mano,
-    // sin json_encode ni librerías de XML.
-    // Reciben el nombre de la raíz y un arreglo asociativo campo => valor,
-    // y respetan el orden del arreglo. Todos los valores salen como texto.
 
     function responder_xml($raiz, $campos) {
         header("Content-Type: application/xml; charset=UTF-8");
@@ -22,8 +17,7 @@
         echo '    "' . $raiz . '": {' . "\n";
         $pendientes = count($campos);
         foreach ($campos as $nombre => $valor) {
-            // Dentro de una cadena JSON solo hay que escapar la barra invertida,
-            // las comillas dobles y los saltos de línea o tabulaciones.
+           
             $valor = str_replace(["\\", '"', "\r", "\n", "\t"], ["\\\\", '\\"', "\\r", "\\n", "\\t"], (string) $valor);
             echo '        "' . $nombre . '": "' . $valor . '"';
             $pendientes = $pendientes - 1;

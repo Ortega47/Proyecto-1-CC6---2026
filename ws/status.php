@@ -1,8 +1,5 @@
 <?php
-    // WebService: GET /status?orden=____&tienda=____&formato=____
-    // Responde el nombre del estado actual de la orden de una tienda.
-    // La búsqueda es por la pareja Envio.No_orden + Envio.ID_tienda, nunca solo por orden.
-    // Es público: sin sesión y sin redirecciones. Siempre responde en XML o JSON.
+   
     ini_set("display_errors", "0");
     date_default_timezone_set("America/Guatemala");
     require __DIR__ . "/config.php";
@@ -23,7 +20,6 @@
         $tienda = trim($_GET["tienda"]);
     }
 
-    // El código público de la tienda tiene 15 caracteres con ceros a la izquierda; en la base es entero.
     $id_tienda = -1;
     if ($tienda != "" && ctype_digit($tienda)) {
         $id_tienda = (int) $tienda;
@@ -36,8 +32,7 @@
         $codigo_http = 405;
         $status = "ERROR";
     } else if ($orden != "" && $id_tienda >= 0) {
-        // Misma conexión que postsql.php, pero sin die(): el servicio debe responder
-        // en el formato pedido aunque la base no esté disponible.
+      
         $host = getenv("DB_HOST");
         $port = getenv("DB_PORT");
         if (!$port) {
