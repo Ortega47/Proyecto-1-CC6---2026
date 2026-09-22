@@ -48,8 +48,8 @@
     $mensaje = "";
     $guia = "";
     $costo = "0.00";
-    $fecha = "";
-    $hora = "";
+    $fecha = date("Ymd");
+    $hora = date("H:i");
     $codigo_http = 200;
 
     if ($_SERVER["REQUEST_METHOD"] != "GET") {
