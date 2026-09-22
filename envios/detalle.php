@@ -12,7 +12,7 @@
         $guia = trim($_GET['guia']);
     }
 
-    $query = 'SELECT e.*,s.Nombre AS estado,t.Nombre AS tienda,t.No_orden,o.Ciudad AS origen,d.Ciudad AS destino FROM Envio e JOIN Estado s ON e.ID_estado=s.ID_estado JOIN Tienda t ON e.ID_tienda=t.ID_tienda JOIN Cabeceras c ON e.ID_cabecera=c.ID_cabecera JOIN Origen o ON c.ID_origen=o.ID_origen JOIN Destino d ON c.ID_destino=d.ID_destino WHERE e.No_guia=$1';
+    $query = 'SELECT e.*,s.Nombre AS estado,t.Nombre AS tienda,o.Ciudad AS origen,d.Ciudad AS destino FROM Envio e JOIN Estado s ON e.ID_estado=s.ID_estado JOIN Tienda t ON e.ID_tienda=t.ID_tienda JOIN Cabeceras c ON e.ID_cabecera=c.ID_cabecera JOIN Origen o ON c.ID_origen=o.ID_origen JOIN Destino d ON c.ID_destino=d.ID_destino WHERE e.No_guia=$1';
     $result = pg_query_params($conn, $query, [$guia]);
     $envio = pg_fetch_assoc($result);
     if (!$envio) {
