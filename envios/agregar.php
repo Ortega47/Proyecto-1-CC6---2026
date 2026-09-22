@@ -45,7 +45,6 @@
             } else if (strtotime($fecha . " " . $hora) > time()) {
                 $mensaje = "La fecha y hora no pueden ser futuras.";
             } else {
-                // El envío y su primer seguimiento se guardan juntos.
                 pg_query($conn, "BEGIN");
                 $query = "INSERT INTO Envio
                           (No_guia, Fecha, Hora, Costo_total, Destinatario, ID_estado, ID_cabecera, ID_tienda)

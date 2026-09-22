@@ -48,8 +48,8 @@
     $mensaje = "";
     $guia = "";
     $costo = "0.00";
-    $fecha = "";
-    $hora = "";
+    $fecha = date("Ymd");
+    $hora = date("H:i");
     $codigo_http = 200;
 
     if ($_SERVER["REQUEST_METHOD"] != "GET") {
@@ -84,7 +84,7 @@
         } else {
             pg_set_client_encoding($conn, "UTF8");
             pg_query($conn, "SET TIME ZONE 'America/Guatemala'");
-e
+
             $query = "SELECT ID_tienda FROM Tienda WHERE ID_tienda = $1";
             $result = @pg_query_params($conn, $query, [$id_tienda]);
             $cabecera = false;

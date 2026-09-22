@@ -21,7 +21,6 @@
             $guardada = trim($fila["contraseña"]);
             $valida = password_verify($clave, $guardada);
 
-            // Conserva el acceso a las cuentas antiguas con clave sin hash.
             if (password_get_info($guardada)["algoName"] == "unknown" && $guardada != "" && hash_equals($guardada, $clave)) {
                 $query = "UPDATE Usuario SET Contraseña=$1 WHERE ID_usuario=$2";
                 $valida = pg_query_params($conn, $query, [password_hash($clave, PASSWORD_DEFAULT), $fila["id_usuario"]]);

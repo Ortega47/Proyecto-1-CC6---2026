@@ -32,7 +32,6 @@
         if (!$siguiente || $actual >= 5 || $actual != $_POST["estado_actual"]) {
             $mensaje = "No se puede avanzar. Revisa el estado actual del envío.";
         } else {
-            // Guardamos el estado y su seguimiento juntos.
             pg_query($conn, "BEGIN");
             $query = "UPDATE Envio SET ID_estado=$1,
                       Fecha_entrega=CASE WHEN $1::int=5 THEN CURRENT_DATE ELSE NULL END
