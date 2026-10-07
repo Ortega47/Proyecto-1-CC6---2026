@@ -20,18 +20,13 @@
         $tienda = trim($_GET["tienda"]);
     }
 
-    $id_tienda = -1;
-    if ($tienda != "" && ctype_digit($tienda)) {
-        $id_tienda = (int) $tienda;
-    }
-
     $status = "NO ENCONTRADO";
     $codigo_http = 200;
 
     if ($_SERVER["REQUEST_METHOD"] != "GET") {
         $codigo_http = 405;
         $status = "ERROR";
-    } else if ($orden != "" && $id_tienda >= 0) {
+    } else if ($orden != "" && $tienda != "") {
       
         $host = getenv("DB_HOST");
         $port = getenv("DB_PORT");
@@ -54,8 +49,10 @@
             $query = "SELECT s.Nombre
                       FROM Envio e
                       JOIN Estado s ON e.ID_estado = s.ID_estado
-                      WHERE e.ID_tienda = $1 AND e.No_orden = $2";
-            $result = @pg_query_params($conn, $query, [$id_tienda, $orden]);
+                      JOIN Tienda t ON e.ID_tienda = t.ID_tienda
+                      WHERE TRIM(t.Nombre) = $1 AND e.No_orden = $2
+                      AND (SELECT COUNT(*) FROM Tienda WHERE TRIM(Nombre) = $1) = 1";
+            $result = @pg_query_params($conn, $query, [$tienda, $orden]);
 
             if (!$result) {
                 $codigo_http = 500;

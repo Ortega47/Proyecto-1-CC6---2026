@@ -38,11 +38,6 @@
         $codigo_destino = str_pad((string) $id_destino, 5, "0", STR_PAD_LEFT);
     }
     $id_tienda = -1;
-    $codigo_tienda = $tienda;
-    if ($tienda != "" && ctype_digit($tienda)) {
-        $id_tienda = (int) $tienda;
-        $codigo_tienda = str_pad((string) $id_tienda, 15, "0", STR_PAD_LEFT);
-    }
 
     $status = "RECHAZADO";
     $mensaje = "";
@@ -61,8 +56,6 @@
         $mensaje = "El número de orden tiene más de 20 caracteres.";
     } else if (strlen($direccion) > 255) {
         $mensaje = "La dirección tiene más de 255 caracteres.";
-    } else if ($id_tienda < 0) {
-        $mensaje = "La tienda no existe.";
     } else if ($id_destino < 0) {
         $mensaje = "El destino no existe.";
     } else {
@@ -85,8 +78,8 @@
             pg_set_client_encoding($conn, "UTF8");
             pg_query($conn, "SET TIME ZONE 'America/Guatemala'");
 
-            $query = "SELECT ID_tienda FROM Tienda WHERE ID_tienda = $1";
-            $result = @pg_query_params($conn, $query, [$id_tienda]);
+            $query = "SELECT ID_tienda FROM Tienda WHERE TRIM(Nombre) = $1";
+            $result = @pg_query_params($conn, $query, [$tienda]);
             $cabecera = false;
 
             if (!$result) {
@@ -94,7 +87,11 @@
                 $mensaje = "No se pudo consultar la base de datos.";
             } else if (pg_num_rows($result) == 0) {
                 $mensaje = "La tienda no existe.";
+            } else if (pg_num_rows($result) > 1) {
+                $mensaje = "Hay varias tiendas con ese nombre. Registra nombres distintos.";
             } else {
+                $fila = pg_fetch_assoc($result);
+                $id_tienda = $fila["id_tienda"];
                 $query = "SELECT CASE WHEN UPPER(TRIM(d.Cobertura)) IN ('SI','SÍ','TRUE','1') THEN 1 ELSE 0 END AS cobertura_destino,
                                  (SELECT CASE WHEN UPPER(TRIM(o.Cobertura)) IN ('SI','SÍ','TRUE','1') THEN 1 ELSE 0 END
                                   FROM Origen o WHERE o.ID_origen = $2) AS cobertura_origen
@@ -197,7 +194,7 @@
     $respuesta = [
         "courrier" => CODIGO_COURIER,
         "orden" => $orden,
-        "tienda" => $codigo_tienda,
+        "tienda" => $tienda,
         "destino" => $codigo_destino,
         "guia" => $guia,
         "status" => $status,
