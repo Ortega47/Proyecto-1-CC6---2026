@@ -1,6 +1,7 @@
 <?php
 
     function responder_xml($raiz, $campos) {
+        ini_set("default_mimetype", "application/xml; charset=UTF-8");
         echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         echo "<" . $raiz . ">\n";
         foreach ($campos as $nombre => $valor) {
@@ -11,11 +12,11 @@
     }
 
     function responder_json($raiz, $campos) {
+        ini_set("default_mimetype", "application/json; charset=UTF-8");
         echo "{\n";
         echo '    "' . $raiz . '": {' . "\n";
         $pendientes = count($campos);
         foreach ($campos as $nombre => $valor) {
-           
             $valor = str_replace(["\\", '"', "\r", "\n", "\t"], ["\\\\", '\\"', "\\r", "\\n", "\\t"], (string) $valor);
             echo '        "' . $nombre . '": "' . $valor . '"';
             $pendientes = $pendientes - 1;
