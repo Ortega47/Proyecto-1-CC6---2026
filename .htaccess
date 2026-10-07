@@ -4,7 +4,12 @@
 # Las reglas son relativas a esta carpeta, así que sirven en la raíz o en una subcarpeta.
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule (^|/)\. - [F]
     RewriteRule ^consulta/?$ ws/consulta.php [L,QSA]
     RewriteRule ^envio/?$ ws/envio.php [L,QSA]
     RewriteRule ^status/?$ ws/status.php [L,QSA]
 </IfModule>
+
+<FilesMatch "\.(sql|ps1|log|backup|conf)$">
+    Require all denied
+</FilesMatch>
