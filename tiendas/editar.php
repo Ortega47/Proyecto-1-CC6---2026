@@ -18,20 +18,16 @@
     }
     $fila = pg_fetch_assoc($result);
     $id_tienda = $fila["id_tienda"];
-    $no_orden = trim((string)$fila["no_orden"]);
     $nombre = trim((string)$fila["nombre"]);
-    $host = trim((string)$fila["host"]);
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $no_orden = trim($_POST["no_orden"]);
         $nombre = trim($_POST["nombre"]);
-        $host = trim($_POST["host"]);
 
-        if ($no_orden < 1 || $nombre == "" || $host == "") {
+        if ($nombre == "") {
             $mensaje = "Revisa los campos del formulario.";
         } else {
-            $query = "UPDATE Tienda SET no_orden=$1, nombre=$2, host=$3 WHERE id_tienda=$4";
-            $result = @pg_query_params($conn, $query, [$no_orden, $nombre, $host, $id]);
+            $query = "UPDATE Tienda SET nombre=$1 WHERE id_tienda=$2";
+            $result = @pg_query_params($conn, $query, [$nombre, $id]);
             if ($result) {
                 $_SESSION["mensaje"] = "Registro guardado correctamente.";
                 header('Location: listado.php');
@@ -67,14 +63,8 @@
     echo '    <label for="id_tienda">ID de tienda</label>';
     echo '    <input id="id_tienda" name="id_tienda" type="number" min="1" max="2147483647" step="1" readonly required value="' . $id_tienda . '">';
 
-    echo '    <label for="no_orden">Número de orden</label>';
-    echo '    <input id="no_orden" name="no_orden" type="number" min="1" max="2147483647" step="1" required value="' . $no_orden . '">';
-
     echo '    <label for="nombre">Nombre</label>';
     echo '    <input id="nombre" name="nombre" type="text" maxlength="150" required value="' . $nombre . '">';
-
-    echo '    <label for="host">Host de la tienda</label>';
-    echo '    <input id="host" name="host" type="text" maxlength="255" required value="' . $host . '">';
 
     echo '    <button>Guardar</button>';
     echo '</form>';

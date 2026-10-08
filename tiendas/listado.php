@@ -7,7 +7,7 @@
         exit;
     }
 
-    $query = 'SELECT id_tienda, no_orden, nombre, host FROM Tienda ORDER BY id_tienda';
+    $query = 'SELECT id_tienda, nombre FROM Tienda ORDER BY id_tienda';
     $result = pg_query($conn, $query);
     $mensaje = '';
     if ($mensaje === '' && isset($_SESSION['mensaje'])) {
@@ -38,16 +38,12 @@
     echo '<a class="button" href="agregar.php">Agregar tienda</a>';
     echo '<div class="tabla"><table>';
     echo '<tr><th scope="col">ID de tienda</th>';
-    echo '    <th scope="col">Número de orden</th>';
     echo '    <th scope="col">Nombre</th>';
-    echo '    <th scope="col">Host de la tienda</th>';
     echo '    <th>Acciones</th></tr>';
     while ($fila = pg_fetch_assoc($result)) {
         echo '<tr>';
         echo '<td>' . $fila['id_tienda'] . '</td>';
-        echo '<td>' . $fila['no_orden'] . '</td>';
         echo '<td>' . $fila['nombre'] . '</td>';
-        echo '<td>' . $fila['host'] . '</td>';
         echo '<td>';
         echo '<a href="editar.php?id=' . $fila['id_tienda'] . '">Editar</a>';
         echo '<a href="eliminar.php?id=' . $fila['id_tienda'] . '">Eliminar</a>';
